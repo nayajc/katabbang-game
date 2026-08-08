@@ -1,0 +1,80 @@
+.page {
+  min-height: 100dvh;
+  padding: calc(24px + env(safe-area-inset-top)) 20px calc(32px + env(safe-area-inset-bottom));
+  background: #0b0d17;
+  color: #fff;
+}
+
+.inner {
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.heading {
+  margin: 0 0 4px;
+  font-size: 28px;
+  font-weight: 800;
+}
+
+.sub {
+  margin: 0 0 20px;
+  font-size: 14px;
+  color: #aab;
+}
+
+.note {
+  margin: 16px 0;
+  font-size: 15px;
+  color: #aab;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 40px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  font-size: 15px;
+}
+
+.mine {
+  background: rgba(255, 92, 122, 0.22);
+  outline: 2px solid #ff5c7a;
+}
+
+.rank {
+  color: #aab;
+  font-variant-numeric: tabular-nums;
+}
+
+.nickname {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 700;
+}
+
+.value {
+  color: #ffd93d;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.back {
+  display: inline-block;
+  margin-top: 24px;
+  color: #ff5c7a;
+  font-weight: 700;
+  text-decoration: none;
+}

@@ -1,0 +1,38 @@
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html {
+  height: 100%;
+  color-scheme: dark;
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow: hidden;
+  overscroll-behavior: none;
+  background: #0b0d17;
+  color: #ededed;
+  font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Pretendard',
+    'Malgun Gothic', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  min-height: 100dvh;
+  /* Game screen: no scroll, no double-tap zoom, no long-press selection. */
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom)
+    env(safe-area-inset-left);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}

@@ -1,0 +1,611 @@
+{
+  "version": "2.0",
+  "lastUpdated": "2026-08-08T07:38:59.913Z",
+  "activeFeatures": [
+    "assets-staging",
+    "game",
+    "entities",
+    "play",
+    "katabbang-game",
+    "unit",
+    "e2e",
+    "fx",
+    "leaderboard",
+    "rules"
+  ],
+  "primaryFeature": "assets-staging",
+  "features": {
+    "assets-staging": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-08-08T06:54:28.140Z",
+        "lastUpdated": "2026-08-08T06:56:44.017Z"
+      },
+      "lastFile": "/Users/jcsong/codework/katabbang-game/.omc/state/assets-staging/postprocess.py"
+    },
+    "game": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-08-08T06:57:17.913Z",
+        "lastUpdated": "2026-08-08T07:13:38.915Z"
+      },
+      "lastFile": "/Users/jcsong/codework/katabbang-game/src/game/game.ts"
+    },
+    "entities": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-08-08T06:58:20.415Z",
+        "lastUpdated": "2026-08-08T06:58:31.472Z"
+      },
+      "lastFile": "/Users/jcsong/codework/katabbang-game/src/game/entities/spawner.ts"
+    },
+    "play": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-08-08T07:00:26.754Z",
+        "lastUpdated": "2026-08-08T07:38:59.913Z"
+      },
+      "lastFile": "/Users/jcsong/codework/katabbang-game/src/app/play/GameCanvas.tsx"
+    },
+    "katabbang-game": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-08-08T07:01:02.451Z",
+        "lastUpdated": "2026-08-08T07:38:53.169Z"
+      },
+      "lastFile": "/Users/jcsong/codework/katabbang-game/src/lib/firebase.ts"
+    },
+    "unit": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-08-08T07:01:26.495Z",
+        "lastUpdated": "2026-08-08T07:14:35.143Z"
+      },
+      "lastFile": "/Users/jcsong/codework/katabbang-game/tests/unit/fx.test.ts"
+    },
+    "e2e": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-08-08T07:02:14.518Z",
+        "lastUpdated": "2026-08-08T07:02:14.518Z"
+      },
+      "lastFile": "/Users/jcsong/codework/katabbang-game/tests/e2e/smoke.spec.ts"
+    },
+    "fx": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-08-08T07:10:33.088Z",
+        "lastUpdated": "2026-08-08T07:30:32.222Z"
+      },
+      "lastFile": "/Users/jcsong/codework/katabbang-game/src/game/fx/index.ts"
+    },
+    "leaderboard": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-08-08T07:11:35.557Z",
+        "lastUpdated": "2026-08-08T07:14:23.480Z"
+      },
+      "lastFile": "/Users/jcsong/codework/katabbang-game/src/app/leaderboard/LeaderboardList.tsx"
+    },
+    "rules": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-08-08T07:12:58.137Z",
+        "lastUpdated": "2026-08-08T07:12:58.137Z"
+      },
+      "lastFile": "/Users/jcsong/codework/katabbang-game/tests/rules/scores.rules.test.ts"
+    }
+  },
+  "pipeline": {
+    "currentPhase": 1,
+    "level": "Dynamic",
+    "phaseHistory": []
+  },
+  "session": {
+    "startedAt": "2026-08-08T06:23:19.873Z",
+    "onboardingCompleted": false,
+    "lastActivity": "2026-08-08T07:38:59.913Z"
+  },
+  "history": [
+    {
+      "timestamp": "2026-08-08T06:54:28.140Z",
+      "feature": "assets-staging",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T06:54:40.063Z",
+      "feature": "assets-staging",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T06:54:47.796Z",
+      "feature": "assets-staging",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T06:56:44.017Z",
+      "feature": "assets-staging",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T06:57:17.913Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T06:57:24.349Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T06:57:29.300Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T06:57:36.514Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T06:57:43.942Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T06:57:56.538Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T06:58:11.465Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T06:58:20.415Z",
+      "feature": "entities",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T06:58:31.472Z",
+      "feature": "entities",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T06:58:40.920Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T06:58:52.934Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T06:59:34.900Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T07:00:05.780Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T07:00:10.300Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T07:00:26.754Z",
+      "feature": "play",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T07:00:40.106Z",
+      "feature": "play",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T07:01:02.451Z",
+      "feature": "katabbang-game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T07:01:06.804Z",
+      "feature": "katabbang-game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T07:01:14.784Z",
+      "feature": "katabbang-game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T07:01:26.495Z",
+      "feature": "unit",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T07:01:35.418Z",
+      "feature": "unit",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T07:01:48.536Z",
+      "feature": "unit",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T07:02:02.242Z",
+      "feature": "unit",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T07:02:07.930Z",
+      "feature": "katabbang-game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T07:02:14.518Z",
+      "feature": "e2e",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T07:03:18.314Z",
+      "feature": "play",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T07:04:32.708Z",
+      "feature": "play",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T07:10:14.187Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T07:10:33.088Z",
+      "feature": "fx",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T07:10:38.701Z",
+      "feature": "katabbang-game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T07:10:40.128Z",
+      "feature": "fx",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T07:10:41.702Z",
+      "feature": "katabbang-game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T07:10:52.765Z",
+      "feature": "katabbang-game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T07:10:56.644Z",
+      "feature": "fx",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T07:11:00.225Z",
+      "feature": "katabbang-game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T07:11:15.803Z",
+      "feature": "katabbang-game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T07:11:16.934Z",
+      "feature": "fx",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T07:11:20.564Z",
+      "feature": "katabbang-game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T07:11:35.557Z",
+      "feature": "leaderboard",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T07:11:44.235Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T07:11:47.065Z",
+      "feature": "leaderboard",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T07:12:05.082Z",
+      "feature": "play",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T07:12:10.089Z",
+      "feature": "play",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T07:12:11.531Z",
+      "feature": "play",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T07:12:32.082Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T07:12:42.028Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T07:12:47.020Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T07:12:51.571Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T07:12:58.137Z",
+      "feature": "rules",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T07:12:59.286Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T07:13:03.797Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T07:13:07.813Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T07:13:11.125Z",
+      "feature": "unit",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T07:13:18.469Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T07:13:22.688Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T07:13:26.889Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T07:13:33.381Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T07:13:38.915Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T07:13:57.983Z",
+      "feature": "katabbang-game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T07:14:13.189Z",
+      "feature": "unit",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T07:14:23.480Z",
+      "feature": "leaderboard",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T07:14:25.054Z",
+      "feature": "play",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T07:14:27.491Z",
+      "feature": "fx",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T07:14:29.899Z",
+      "feature": "play",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T07:14:35.143Z",
+      "feature": "unit",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T07:30:32.222Z",
+      "feature": "fx",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T07:38:34.981Z",
+      "feature": "katabbang-game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T07:38:42.399Z",
+      "feature": "katabbang-game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T07:38:47.330Z",
+      "feature": "katabbang-game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T07:38:53.169Z",
+      "feature": "katabbang-game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T07:38:59.913Z",
+      "feature": "play",
+      "phase": "do",
+      "action": "updated"
+    }
+  ]
+}

@@ -1,0 +1,147 @@
+.stage {
+  position: fixed;
+  inset: 0;
+  height: 100dvh;
+  width: 100vw;
+  background: #0b0d17;
+  overflow: hidden;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: calc(24px + env(safe-area-inset-top)) 24px calc(24px + env(safe-area-inset-bottom));
+  text-align: center;
+  background: rgba(11, 13, 23, 0.82);
+  color: #fff;
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(28px, 8vw, 44px);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.score {
+  margin: 0;
+  font-size: clamp(36px, 12vw, 64px);
+  font-weight: 800;
+  color: #ffd93d;
+}
+
+.desc {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.6;
+  color: #aab;
+}
+
+.button {
+  margin-top: 8px;
+  padding: 14px 40px;
+  border: 0;
+  border-radius: 999px;
+  background: #ff5c7a;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.button:active {
+  transform: scale(0.97);
+}
+
+/* --- Leaderboard / share panel (game over overlay) --- */
+.panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: min(420px, 100%);
+}
+
+.best {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #aab;
+}
+
+.formRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 11px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  font-size: 15px;
+}
+
+.input::placeholder {
+  color: #7c8397;
+}
+
+.smallButton {
+  flex: 0 0 auto;
+  padding: 11px 18px;
+  border: 0;
+  border-radius: 999px;
+  background: #ff5c7a;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.smallButton:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.link {
+  flex: 0 0 auto;
+  padding: 11px 4px;
+  color: #ffd93d;
+  font-size: 15px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.board {
+  width: 100%;
+  max-height: 34dvh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+}

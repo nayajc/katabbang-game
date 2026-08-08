@@ -1,0 +1,109 @@
+'use client';
+
+import dynamic from 'next/dynamic';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Game, type GameOverInfo } from '@/game/game';
+import type { Phase } from '@/game/state';
+import { TUNING } from '@/game/tuning';
+import styles from './play.module.css';
+
+// Loaded on demand: the panel pulls in the Firebase SDK, which must stay out of
+// the /play first-load bundle.
+const GameOverPanel = dynamic(() => import('./GameOverPanel'), {
+  ssr: false,
+  loading: () => <p className={styles.desc}>불러오는 중…</p>,
+});
+
+export type GameCanvasProps = {
+  /**
+   * LEADERBOARD INTEGRATION POINT — called once per run when HP hits 0.
+   * The leaderboard worker hooks the nickname modal + Firestore write here.
+   */
+  onGameOver?: (info: GameOverInfo) => void;
+};
+
+export default function GameCanvas({ onGameOver }: GameCanvasProps) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const gameRef = useRef<Game | null>(null);
+  const onGameOverRef = useRef(onGameOver);
+  useEffect(() => {
+    onGameOverRef.current = onGameOver;
+  }, [onGameOver]);
+
+  // Phase drives only the React overlays (title / game over) — never per-frame HUD.
+  const [phase, setPhase] = useState<Phase>('title');
+  const [result, setResult] = useState<GameOverInfo | null>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const resize = () => {
+      const dpr = Math.min(TUNING.MAX_DPR, window.devicePixelRatio || 1);
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = Math.round(rect.width * dpr);
+      canvas.height = Math.round(rect.height * dpr);
+    };
+    resize();
+
+    const game = new Game({
+      canvas,
+      onPhase: setPhase,
+      onGameOver: (info) => {
+        setResult(info);
+        onGameOverRef.current?.(info);
+      },
+    });
+    gameRef.current = game;
+    game.start();
+
+    window.addEventListener('resize', resize);
+    window.addEventListener('orientationchange', resize);
+    return () => {
+      window.removeEventListener('resize', resize);
+      window.removeEventListener('orientationchange', resize);
+      game.destroy();
+      gameRef.current = null;
+    };
+  }, []);
+
+  const startRun = useCallback(() => {
+    setResult(null);
+    gameRef.current?.startRun();
+  }, []);
+
+  return (
+    <div className={styles.stage} data-phase={phase}>
+      <canvas ref={canvasRef} className={styles.canvas} data-testid="game-canvas" />
+
+      {phase === 'title' && (
+        <div className={styles.overlay} data-testid="title-screen">
+          <h1 className={styles.title}>어깨빵 응징 러너</h1>
+          <p className={styles.desc}>
+            스와이프로 피하고, 어깨빵 시전자가 오면 <b>탭!</b>
+            <br />
+            데스크톱: ←/→ 이동, Space/Enter 응징
+          </p>
+          <button type="button" className={styles.button} onClick={startRun} data-testid="start-button">
+            시작하기
+          </button>
+        </div>
+      )}
+
+      {phase === 'gameover' && (
+        <div className={styles.overlay} data-testid="gameover-screen">
+          <h2 className={styles.title}>게임 오버</h2>
+          <p className={styles.score}>{result?.score ?? 0}점</p>
+          <p className={styles.desc}>
+            최고 콤보 {result?.bestCombo ?? 0} · 저스티스 {result?.justice ?? 0}
+          </p>
+          <button type="button" className={styles.button} onClick={startRun} data-testid="retry-button">
+            다시 하기
+          </button>
+          {/* LEADERBOARD INTEGRATION POINT: nickname modal + TOP 100 link mount here. */}
+          {result && <GameOverPanel key={result.seed} result={result} />}
+        </div>
+      )}
+    </div>
+  );
+}

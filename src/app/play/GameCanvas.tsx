@@ -41,8 +41,11 @@ export default function GameCanvas({ onGameOver }: GameCanvasProps) {
     const resize = () => {
       const dpr = Math.min(TUNING.MAX_DPR, window.devicePixelRatio || 1);
       const rect = canvas.getBoundingClientRect();
-      canvas.width = Math.round(rect.width * dpr);
-      canvas.height = Math.round(rect.height * dpr);
+      const w = Math.max(1, Math.round(rect.width * dpr));
+      const h = Math.max(1, Math.round(rect.height * dpr));
+      if (canvas.width === w && canvas.height === h) return;
+      canvas.width = w;
+      canvas.height = h;
     };
     resize();
 
@@ -57,9 +60,18 @@ export default function GameCanvas({ onGameOver }: GameCanvasProps) {
     gameRef.current = game;
     game.start();
 
+    // The backing store MUST track the CSS box: render() derives the letterbox
+    // from canvas.width/height while screenToVirtual() derives it from the
+    // bounding rect, so any aspect drift moves the drawn buttons away from their
+    // hit boxes. On iOS the 100dvh box changes as the browser chrome collapses
+    // without a reliable window 'resize', hence the observer.
+    const ro = new ResizeObserver(resize);
+    ro.observe(canvas);
+
     window.addEventListener('resize', resize);
     window.addEventListener('orientationchange', resize);
     return () => {
+      ro.disconnect();
       window.removeEventListener('resize', resize);
       window.removeEventListener('orientationchange', resize);
       game.destroy();

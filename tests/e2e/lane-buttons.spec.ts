@@ -20,7 +20,26 @@ async function virtualToClient(canvas: Locator, vx: number, vy: number) {
 
 async function tapVirtual(page: Page, canvas: Locator, vx: number, vy: number) {
   const p = await virtualToClient(canvas, vx, vy);
-  await page.mouse.click(p.x, p.y);
+  if (await page.evaluate(() => 'ontouchstart' in window)) {
+    await page.touchscreen.tap(p.x, p.y);
+  } else {
+    await page.mouse.click(p.x, p.y);
+  }
+}
+
+/** Where a virtual point is actually DRAWN, using render()'s backing-store math. */
+async function drawnToClient(canvas: Locator, vx: number, vy: number) {
+  return canvas.evaluate(
+    (el, { vx, vy, VW, VH }) => {
+      const c = el as HTMLCanvasElement;
+      const r = c.getBoundingClientRect();
+      const s = Math.min(c.width / VW, c.height / VH);
+      const dx = (c.width - VW * s) / 2 + vx * s;
+      const dy = (c.height - VH * s) / 2 + vy * s;
+      return { x: r.left + dx * (r.width / c.width), y: r.top + dy * (r.height / c.height) };
+    },
+    { vx, vy, VW: VIRTUAL_W, VH: VIRTUAL_H },
+  );
 }
 
 function lane(canvas: Locator) {
@@ -71,4 +90,39 @@ test('a lane button tap during slowmo does not count as a counter tap', async ({
 
   expect(await stage.getAttribute('data-phase')).toBe('slowmo');
   expect(await lane(canvas)).not.toBe(before);
+});
+
+test('lane buttons stay tappable after the viewport box changes (iOS browser chrome)', async ({
+  page,
+}) => {
+  await page.goto('/');
+  const canvas = page.getByTestId('game-canvas');
+  await page.getByTestId('start-button').click();
+  await expect(canvas).toHaveAttribute('data-player-lane', '1');
+
+  // iOS collapses/expands its chrome, which resizes the 100dvh stage. If the
+  // canvas backing store does not follow, the drawn buttons drift away from
+  // their hit boxes and taps land on nothing.
+  await page.evaluate(() => {
+    (document.querySelector('[data-phase]') as HTMLElement).style.height = '460px';
+  });
+  await expect
+    .poll(async () =>
+      canvas.evaluate((el) => {
+        const c = el as HTMLCanvasElement;
+        return Math.round((c.width / c.height) * 1000);
+      }),
+    )
+    .toBe(
+      await canvas.evaluate((el) => {
+        const r = el.getBoundingClientRect();
+        return Math.round((r.width / r.height) * 1000);
+      }),
+    );
+
+  // Tap where the button is DRAWN, not where the hit box is assumed to be.
+  const p = await drawnToClient(canvas, RIGHT_BUTTON.x, RIGHT_BUTTON.y);
+  if (await page.evaluate(() => 'ontouchstart' in window)) await page.touchscreen.tap(p.x, p.y);
+  else await page.mouse.click(p.x, p.y);
+  await expect(canvas).toHaveAttribute('data-player-lane', '2');
 });

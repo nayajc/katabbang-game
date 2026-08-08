@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-08-08T08:30:47.889Z",
+  "lastUpdated": "2026-08-08T08:50:25.754Z",
   "activeFeatures": [
     "assets-staging",
     "game",
@@ -63,7 +63,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-08-08T07:00:26.754Z",
-        "lastUpdated": "2026-08-08T07:38:59.913Z"
+        "lastUpdated": "2026-08-08T08:49:10.979Z"
       },
       "lastFile": "/Users/jcsong/codework/katabbang-game/src/app/play/GameCanvas.tsx"
     },
@@ -76,9 +76,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-08-08T07:01:02.451Z",
-        "lastUpdated": "2026-08-08T07:38:53.169Z"
+        "lastUpdated": "2026-08-08T08:50:25.754Z"
       },
-      "lastFile": "/Users/jcsong/codework/katabbang-game/src/lib/firebase.ts"
+      "lastFile": "/Users/jcsong/codework/katabbang-game/playwright.config.ts"
     },
     "unit": {
       "phase": "do",
@@ -102,9 +102,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-08-08T07:02:14.518Z",
-        "lastUpdated": "2026-08-08T08:24:57.916Z"
+        "lastUpdated": "2026-08-08T08:50:01.899Z"
       },
-      "lastFile": "/Users/jcsong/codework/katabbang-game/tests/e2e/animation.spec.ts"
+      "lastFile": "/Users/jcsong/codework/katabbang-game/tests/e2e/lane-buttons.spec.ts"
     },
     "fx": {
       "phase": "do",
@@ -154,7 +154,7 @@
   "session": {
     "startedAt": "2026-08-08T06:23:19.873Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-08-08T08:30:47.889Z"
+    "lastActivity": "2026-08-08T08:50:25.754Z"
   },
   "history": [
     {
@@ -796,6 +796,36 @@
     {
       "timestamp": "2026-08-08T08:30:47.889Z",
       "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T08:49:03.984Z",
+      "feature": "play",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T08:49:10.979Z",
+      "feature": "play",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T08:49:57.381Z",
+      "feature": "e2e",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T08:50:01.899Z",
+      "feature": "e2e",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T08:50:25.754Z",
+      "feature": "katabbang-game",
       "phase": "do",
       "action": "updated"
     }

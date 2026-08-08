@@ -12,7 +12,12 @@ export default defineConfig({
     baseURL: `http://127.0.0.1:${PORT}`,
     trace: 'on-first-retry',
   },
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+  projects: [
+    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
+    // iOS Safari / iOS Chrome both run WebKit — touch input + letterbox math
+    // regress there first, so keep one mobile WebKit lane in CI.
+    { name: 'webkit-mobile', use: { ...devices['iPhone 14'] } },
+  ],
   webServer: {
     command: `npx next start --port ${PORT}`,
     url: `http://127.0.0.1:${PORT}`,

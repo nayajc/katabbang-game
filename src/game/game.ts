@@ -8,11 +8,14 @@ import { Fx } from './fx';
 import { attachInput } from './input';
 import type { Grade } from './judge';
 import { createRng } from './rng';
-import { hitsMuteButton, render, screenToVirtual } from './render';
+import { hitsLaneButton, hitsMuteButton, render, screenToVirtual } from './render';
 import { loadSprites } from './sprites';
 import { addDistance, applyCounter, applyHit, createScore, total, type Score } from './scoring';
 import { StateMachine, type Phase } from './state';
 import { TUNING } from './tuning';
+
+/** Wall-clock duration of the lane button pressed highlight. */
+const LANE_PRESS_MS = 130;
 
 export type GameOverInfo = {
   score: number;
@@ -46,6 +49,8 @@ export type GameView = {
   fx: Fx;
   /** Drives the on-canvas mute button glyph. */
   muted: boolean;
+  /** Lane button showing its pressed highlight this frame, if any. */
+  lanePressed: -1 | 1 | null;
 };
 
 export class Game {
@@ -70,6 +75,8 @@ export class Game {
   private onGameOver?: (info: GameOverInfo) => void;
   private fx = new Fx();
   private lastFxTs = 0;
+  private lanePressDir: -1 | 1 | null = null;
+  private lanePressUntil = 0;
 
   constructor(opts: GameOptions) {
     this.canvas = opts.canvas;
@@ -88,18 +95,28 @@ export class Game {
     loadSprites();
     const detachUnlock = audio.unlockOnGesture();
 
-    // Registered BEFORE attachInput so a tap on the mute button can swallow the
-    // event (same-target listeners fire in registration order).
-    const onMuteTap = (e: PointerEvent) => {
+    // Registered BEFORE attachInput so a tap on the mute or lane buttons can
+    // swallow the event (same-target listeners fire in registration order).
+    const onButtonTap = (e: PointerEvent) => {
       const { x, y } = screenToVirtual(this.canvas, e.clientX, e.clientY);
-      if (!hitsMuteButton(x, y)) return;
-      audio.toggleMute();
+      if (hitsMuteButton(x, y)) {
+        audio.toggleMute();
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        return;
+      }
+      if (!this.sm.is('running', 'slowmo')) return;
+      const dir = hitsLaneButton(x, y);
+      if (dir === null) return;
+      this.lanePressDir = dir;
+      this.lanePressUntil = now() + LANE_PRESS_MS;
+      this.onLane(dir);
       e.preventDefault();
       e.stopImmediatePropagation();
     };
-    this.canvas.addEventListener('pointerdown', onMuteTap, { passive: false });
+    this.canvas.addEventListener('pointerdown', onButtonTap, { passive: false });
     this.detachFx = () => {
-      this.canvas.removeEventListener('pointerdown', onMuteTap);
+      this.canvas.removeEventListener('pointerdown', onButtonTap);
       detachUnlock();
     };
 
@@ -136,6 +153,7 @@ export class Game {
     this.lastGrade = null;
     this.lastGain = 0;
     this.fx.reset();
+    this.canvas.dataset.playerLane = String(this.player.lane);
     this.sm.set('running');
   }
 
@@ -153,6 +171,7 @@ export class Game {
   private onLane(dir: -1 | 1): void {
     if (!this.sm.is('running', 'slowmo')) return;
     this.player.move(dir);
+    this.canvas.dataset.playerLane = String(this.player.lane);
   }
 
   private timescale(): number {
@@ -307,6 +326,7 @@ export class Game {
       counterLeadMs: this.counter.active ? this.counter.windowCenterTs - wallTs : 0,
       fx: this.fx,
       muted: audio.muted,
+      lanePressed: wallTs < this.lanePressUntil ? this.lanePressDir : null,
     };
     render(this.ctx, this.canvas, view);
   }

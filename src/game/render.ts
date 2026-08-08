@@ -23,6 +23,18 @@ const GRADE_COLOR: Record<string, string> = {
 /** Mute button, in virtual units (top-right, below the HP row). */
 export const MUTE_BUTTON = { x: TUNING.VIRTUAL_W - 52, y: 96, r: 26 } as const;
 
+/**
+ * On-screen lane buttons, in virtual units. Bottom corners (thumb-reachable),
+ * kept clear of the top-right mute button and lifted off the bottom edge so the
+ * iOS home indicator / safe-area inset does not sit on top of them.
+ */
+export const LEFT_LANE_BUTTON = { x: 86, y: TUNING.VIRTUAL_H - 112, r: 46 } as const;
+export const RIGHT_LANE_BUTTON = {
+  x: TUNING.VIRTUAL_W - 86,
+  y: TUNING.VIRTUAL_H - 112,
+  r: 46,
+} as const;
+
 export function render(
   ctx: CanvasRenderingContext2D,
   canvas: HTMLCanvasElement,
@@ -62,6 +74,7 @@ export function render(
   if (fx.slowmo > 0.01) drawVignette(ctx, fx.slowmo);
   drawHud(ctx, view);
   drawMuteButton(ctx, view.muted);
+  drawLaneButtons(ctx, view);
   drawOverlay(ctx, view);
 }
 
@@ -86,6 +99,20 @@ export function hitsMuteButton(x: number, y: number): boolean {
   const dy = y - MUTE_BUTTON.y;
   const r = MUTE_BUTTON.r + 10;
   return dx * dx + dy * dy <= r * r;
+}
+
+/** Which lane button (if any) a virtual-space point hits. */
+export function hitsLaneButton(x: number, y: number): -1 | 1 | null {
+  for (const [dir, b] of [
+    [-1, LEFT_LANE_BUTTON],
+    [1, RIGHT_LANE_BUTTON],
+  ] as const) {
+    const dx = x - b.x;
+    const dy = y - b.y;
+    const r = b.r + 10;
+    if (dx * dx + dy * dy <= r * r) return dir;
+  }
+  return null;
 }
 
 function drawRoad(ctx: CanvasRenderingContext2D, view: GameView) {
@@ -238,6 +265,28 @@ function drawMuteButton(ctx: CanvasRenderingContext2D, muted: boolean) {
   ctx.fillStyle = '#fff';
   ctx.fillText(muted ? '🔇' : '🔊', 0, 1);
   ctx.restore();
+}
+
+function drawLaneButtons(ctx: CanvasRenderingContext2D, view: GameView) {
+  if (view.phase !== 'running' && view.phase !== 'slowmo') return;
+  for (const [dir, b, glyph] of [
+    [-1, LEFT_LANE_BUTTON, '◀'],
+    [1, RIGHT_LANE_BUTTON, '▶'],
+  ] as const) {
+    const pressed = view.lanePressed === dir;
+    ctx.save();
+    ctx.translate(b.x, b.y);
+    ctx.fillStyle = pressed ? '#ffffff3d' : '#ffffff14';
+    ctx.beginPath();
+    ctx.arc(0, 0, b.r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = 'bold 36px system-ui, sans-serif';
+    ctx.fillStyle = pressed ? '#ffffff' : '#ffffff8c';
+    ctx.fillText(glyph, 0, 2);
+    ctx.restore();
+  }
 }
 
 function drawOverlay(ctx: CanvasRenderingContext2D, view: GameView) {

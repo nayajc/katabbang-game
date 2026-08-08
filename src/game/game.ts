@@ -7,6 +7,7 @@ import { collides, Spawner, type Entity } from './entities/spawner';
 import { Fx } from './fx';
 import { attachInput } from './input';
 import type { Grade } from './judge';
+import { notePointerDown, pointerEventsWorking } from './pointer-health';
 import { createRng } from './rng';
 import { hitsLaneButton, hitsMuteButton, render, screenToVirtual } from './render';
 import { loadSprites } from './sprites';
@@ -99,26 +100,43 @@ export class Game {
 
     // Registered BEFORE attachInput so a tap on the mute or lane buttons can
     // swallow the event (same-target listeners fire in registration order).
-    const onButtonTap = (e: PointerEvent) => {
-      const { x, y } = screenToVirtual(this.canvas, e.clientX, e.clientY);
+    /** @returns true when the press landed on a canvas button and was consumed. */
+    const tryButtonTap = (clientX: number, clientY: number): boolean => {
+      const { x, y } = screenToVirtual(this.canvas, clientX, clientY);
       if (hitsMuteButton(x, y)) {
         audio.toggleMute();
-        e.preventDefault();
-        e.stopImmediatePropagation();
-        return;
+        return true;
       }
-      if (!this.sm.is('running', 'slowmo')) return;
+      if (!this.sm.is('running', 'slowmo')) return false;
       const dir = hitsLaneButton(x, y);
-      if (dir === null) return;
+      if (dir === null) return false;
       this.lanePressDir = dir;
       this.lanePressUntil = now() + LANE_PRESS_MS;
       this.onLane(dir);
+      return true;
+    };
+
+    const onButtonTap = (e: PointerEvent) => {
+      notePointerDown();
+      if (!tryButtonTap(e.clientX, e.clientY)) return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+    };
+    // Touch fallback for browsers that never deliver pointerdown. Registered
+    // before attachInput's own touch listeners so it can swallow the gesture.
+    const onButtonTouch = (e: TouchEvent) => {
+      if (pointerEventsWorking()) return;
+      const t = e.changedTouches[0];
+      if (!t) return;
+      if (!tryButtonTap(t.clientX, t.clientY)) return;
       e.preventDefault();
       e.stopImmediatePropagation();
     };
     this.canvas.addEventListener('pointerdown', onButtonTap, { passive: false });
+    this.canvas.addEventListener('touchstart', onButtonTouch as EventListener, { passive: false });
     this.detachFx = () => {
       this.canvas.removeEventListener('pointerdown', onButtonTap);
+      this.canvas.removeEventListener('touchstart', onButtonTouch as EventListener);
       detachUnlock();
     };
 

@@ -86,6 +86,24 @@ export default function GameCanvas({ onGameOver }: GameCanvasProps) {
     };
   }, []);
 
+  // ?debug=1 — real-device diagnostics. Dynamically imported so it adds nothing
+  // to the normal bundle, and it never touches gameplay input.
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    if (new URLSearchParams(window.location.search).get('debug') !== '1') return;
+    let unmount: (() => void) | null = null;
+    let cancelled = false;
+    void import('./debugHud').then(({ mountDebugHud }) => {
+      if (cancelled) return;
+      unmount = mountDebugHud(canvas);
+    });
+    return () => {
+      cancelled = true;
+      unmount?.();
+    };
+  }, []);
+
   const startRun = useCallback(() => {
     setResult(null);
     gameRef.current?.startRun();

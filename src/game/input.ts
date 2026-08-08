@@ -5,7 +5,11 @@
  * - horizontal swipe => lane change, tap => counter
  * - desktop: ArrowLeft/ArrowRight lanes, Space/Enter counter (keydown, repeat ignored)
  * - every callback receives `event.timeStamp` (same time origin as performance.now())
+ * - touch-event FALLBACK for browsers that never deliver pointer events; it
+ *   disables itself permanently once any pointerdown is seen (see pointer-health)
  */
+import { notePointerDown, pointerEventsWorking } from './pointer-health';
+
 export type InputHandlers = {
   onLane(direction: -1 | 1, ts: number): void;
   onCounter(ts: number): void;
@@ -24,6 +28,7 @@ export function attachInput(el: HTMLElement, handlers: InputHandlers): () => voi
   let swiped = false;
 
   const onPointerDown = (e: PointerEvent) => {
+    notePointerDown();
     // Self-healing: a stale pointerId (e.g. a touch that ended without a
     // pointerup/pointercancel we saw — common on iOS when a system gesture or
     // browser chrome steals the touch) must never deafen input. Always adopt
@@ -85,6 +90,60 @@ export function attachInput(el: HTMLElement, handlers: InputHandlers): () => voi
     if (e.pointerId === pointerId) pointerId = null;
   };
 
+  // ---------------------------------------------------------------------
+  // Touch fallback. Only ever runs while pointer events have proven silent.
+  // Uses the same startX/startY/startTs/swiped gesture state — the two paths
+  // are mutually exclusive, so they can never interleave.
+  // ---------------------------------------------------------------------
+  let touchId: number | null = null;
+
+  const findTouch = (list: TouchList): Touch | null => {
+    for (let i = 0; i < list.length; i++) {
+      if (list[i].identifier === touchId) return list[i];
+    }
+    return null;
+  };
+
+  const onTouchStart = (e: TouchEvent) => {
+    if (pointerEventsWorking()) return;
+    const t = e.changedTouches[0];
+    if (!t) return;
+    touchId = t.identifier;
+    startX = t.clientX;
+    startY = t.clientY;
+    startTs = e.timeStamp;
+    swiped = false;
+    e.preventDefault();
+  };
+
+  const onTouchMove = (e: TouchEvent) => {
+    if (pointerEventsWorking() || touchId === null || swiped) return;
+    const t = findTouch(e.changedTouches);
+    if (!t) return;
+    const dx = t.clientX - startX;
+    if (Math.abs(dx) >= SWIPE_PX && Math.abs(dx) > Math.abs(t.clientY - startY)) {
+      swiped = true;
+      handlers.onLane(dx > 0 ? 1 : -1, e.timeStamp);
+    }
+    e.preventDefault();
+  };
+
+  const onTouchEnd = (e: TouchEvent) => {
+    if (pointerEventsWorking() || touchId === null) return;
+    if (!findTouch(e.changedTouches)) return;
+    touchId = null;
+    if (!swiped && e.timeStamp - startTs <= TAP_MS) {
+      // Same rule as the pointer path: judge with the press timestamp.
+      handlers.onCounter(startTs);
+    }
+    e.preventDefault();
+  };
+
+  const onTouchCancel = () => {
+    touchId = null;
+    swiped = false;
+  };
+
   const onKeyDown = (e: KeyboardEvent) => {
     if (e.repeat) return;
     switch (e.key) {
@@ -113,6 +172,10 @@ export function attachInput(el: HTMLElement, handlers: InputHandlers): () => voi
   el.addEventListener('pointerup', onPointerUp, opts);
   el.addEventListener('pointercancel', onPointerCancel, opts);
   el.addEventListener('lostpointercapture', onLostPointerCapture, opts);
+  el.addEventListener('touchstart', onTouchStart as EventListener, opts);
+  el.addEventListener('touchmove', onTouchMove as EventListener, opts);
+  el.addEventListener('touchend', onTouchEnd as EventListener, opts);
+  el.addEventListener('touchcancel', onTouchCancel as EventListener, opts);
   window.addEventListener('keydown', onKeyDown, opts);
 
   return () => {
@@ -121,6 +184,10 @@ export function attachInput(el: HTMLElement, handlers: InputHandlers): () => voi
     el.removeEventListener('pointerup', onPointerUp);
     el.removeEventListener('pointercancel', onPointerCancel);
     el.removeEventListener('lostpointercapture', onLostPointerCapture);
+    el.removeEventListener('touchstart', onTouchStart as EventListener);
+    el.removeEventListener('touchmove', onTouchMove as EventListener);
+    el.removeEventListener('touchend', onTouchEnd as EventListener);
+    el.removeEventListener('touchcancel', onTouchCancel as EventListener);
     window.removeEventListener('keydown', onKeyDown);
   };
 }

@@ -1,8 +1,9 @@
 .stage {
+  /* inset:0 alone — no 100dvh/100vw. iOS Chrome resolves dvh/vh against the
+     LARGE viewport, which made the stage taller than what is actually visible
+     and pushed the bottom-anchored lane buttons under the browser toolbar. */
   position: fixed;
   inset: 0;
-  height: 100dvh;
-  width: 100vw;
   background: #0b0d17;
   overflow: hidden;
   touch-action: none;

@@ -3,8 +3,8 @@ import { expect, test, type Locator, type Page } from '@playwright/test';
 // Mirrors src/game/tuning.ts + the lane button constants in src/game/render.ts.
 const VIRTUAL_W = 540;
 const VIRTUAL_H = 960;
-const LEFT_BUTTON = { x: 86, y: VIRTUAL_H - 112 };
-const RIGHT_BUTTON = { x: VIRTUAL_W - 86, y: VIRTUAL_H - 112 };
+const LEFT_BUTTON = { x: 86, y: VIRTUAL_H - 200 };
+const RIGHT_BUTTON = { x: VIRTUAL_W - 86, y: VIRTUAL_H - 200 };
 
 /** Virtual units -> client px, using the same letterbox math as screenToVirtual(). */
 async function virtualToClient(canvas: Locator, vx: number, vy: number) {
@@ -124,5 +124,36 @@ test('lane buttons stay tappable after the viewport box changes (iOS browser chr
   const p = await drawnToClient(canvas, RIGHT_BUTTON.x, RIGHT_BUTTON.y);
   if (await page.evaluate(() => 'ontouchstart' in window)) await page.touchscreen.tap(p.x, p.y);
   else await page.mouse.click(p.x, p.y);
+  await expect(canvas).toHaveAttribute('data-player-lane', '2');
+});
+
+test('a cancelled pointer gesture does not deafen subsequent input', async ({ page }) => {
+  await page.goto('/');
+  const canvas = page.getByTestId('game-canvas');
+  await page.getByTestId('start-button').click();
+  await expect(canvas).toHaveAttribute('data-player-lane', '1');
+
+  // iOS frequently ends a touch with `pointercancel` (system gesture, browser
+  // chrome). A stale pointerId used to block every later pointerdown forever.
+  const p = await virtualToClient(canvas, RIGHT_BUTTON.x, RIGHT_BUTTON.y);
+  await canvas.evaluate(
+    (el, { x, y }) => {
+      const base = {
+        pointerId: 999,
+        pointerType: 'touch',
+        isPrimary: true,
+        bubbles: true,
+        cancelable: true,
+        clientX: x,
+        clientY: y,
+      };
+      el.dispatchEvent(new PointerEvent('pointerdown', base));
+      el.dispatchEvent(new PointerEvent('pointercancel', base));
+    },
+    { x: p.x, y: p.y },
+  );
+
+  // Input must still work afterwards.
+  await tapVirtual(page, canvas, RIGHT_BUTTON.x, RIGHT_BUTTON.y);
   await expect(canvas).toHaveAttribute('data-player-lane', '2');
 });

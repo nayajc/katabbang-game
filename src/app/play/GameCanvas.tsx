@@ -70,10 +70,17 @@ export default function GameCanvas({ onGameOver }: GameCanvasProps) {
 
     window.addEventListener('resize', resize);
     window.addEventListener('orientationchange', resize);
+    // iOS collapses/expands its toolbars without always firing a window resize
+    // or an observable CSS box change; visualViewport is the reliable signal.
+    const vv = window.visualViewport;
+    vv?.addEventListener('resize', resize);
+    vv?.addEventListener('scroll', resize);
     return () => {
       ro.disconnect();
       window.removeEventListener('resize', resize);
       window.removeEventListener('orientationchange', resize);
+      vv?.removeEventListener('resize', resize);
+      vv?.removeEventListener('scroll', resize);
       game.destroy();
       gameRef.current = null;
     };

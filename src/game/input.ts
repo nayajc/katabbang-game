@@ -24,8 +24,16 @@ export function attachInput(el: HTMLElement, handlers: InputHandlers): () => voi
   let swiped = false;
 
   const onPointerDown = (e: PointerEvent) => {
-    if (pointerId !== null) return;
+    // Self-healing: a stale pointerId (e.g. a touch that ended without a
+    // pointerup/pointercancel we saw — common on iOS when a system gesture or
+    // browser chrome steals the touch) must never deafen input. Always adopt
+    // the newest pointer instead of ignoring it.
     pointerId = e.pointerId;
+    try {
+      el.setPointerCapture(e.pointerId);
+    } catch {
+      // Capture is best-effort: some engines reject it for already-released ids.
+    }
     startX = e.clientX;
     startY = e.clientY;
     startTs = e.timeStamp;
@@ -43,9 +51,18 @@ export function attachInput(el: HTMLElement, handlers: InputHandlers): () => voi
     e.preventDefault();
   };
 
+  const releaseCapture = (id: number) => {
+    try {
+      if (el.hasPointerCapture?.(id)) el.releasePointerCapture(id);
+    } catch {
+      // Ignore: the capture may already be gone (cancel, element detached).
+    }
+  };
+
   const onPointerUp = (e: PointerEvent) => {
     if (e.pointerId !== pointerId) return;
     pointerId = null;
+    releaseCapture(e.pointerId);
     if (!swiped && e.timeStamp - startTs <= TAP_MS) {
       // Tap intent is decided at press time — judge with the pointerdown stamp.
       handlers.onCounter(startTs);
@@ -53,7 +70,18 @@ export function attachInput(el: HTMLElement, handlers: InputHandlers): () => voi
     e.preventDefault();
   };
 
+  // iOS ends touches with `pointercancel` far more often than desktop (system
+  // gestures, browser chrome, scroll takeover). Clean up exactly like pointerup
+  // — minus the counter tap, since a cancelled gesture is not a tap.
   const onPointerCancel = (e: PointerEvent) => {
+    if (e.pointerId === pointerId) pointerId = null;
+    swiped = false;
+    releaseCapture(e.pointerId);
+  };
+
+  // Capture can also be lost without any pointer event we handle; treat it as a
+  // gesture end so tracking can never stay stuck.
+  const onLostPointerCapture = (e: PointerEvent) => {
     if (e.pointerId === pointerId) pointerId = null;
   };
 
@@ -84,6 +112,7 @@ export function attachInput(el: HTMLElement, handlers: InputHandlers): () => voi
   el.addEventListener('pointermove', onPointerMove, opts);
   el.addEventListener('pointerup', onPointerUp, opts);
   el.addEventListener('pointercancel', onPointerCancel, opts);
+  el.addEventListener('lostpointercapture', onLostPointerCapture, opts);
   window.addEventListener('keydown', onKeyDown, opts);
 
   return () => {
@@ -91,6 +120,7 @@ export function attachInput(el: HTMLElement, handlers: InputHandlers): () => voi
     el.removeEventListener('pointermove', onPointerMove);
     el.removeEventListener('pointerup', onPointerUp);
     el.removeEventListener('pointercancel', onPointerCancel);
+    el.removeEventListener('lostpointercapture', onLostPointerCapture);
     window.removeEventListener('keydown', onKeyDown);
   };
 }

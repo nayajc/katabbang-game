@@ -36,13 +36,14 @@ export const MUTE_BUTTON = { x: TUNING.VIRTUAL_W - 52, y: 96, r: 26 } as const;
 
 /**
  * On-screen lane buttons, in virtual units. Bottom corners (thumb-reachable),
- * kept clear of the top-right mute button and lifted off the bottom edge so the
- * iOS home indicator / safe-area inset does not sit on top of them.
+ * kept clear of the top-right mute button and lifted well off the bottom edge
+ * (200 virtual units) so neither the iOS home indicator nor the collapsing
+ * Safari/Chrome bottom toolbar can sit on top of them.
  */
-export const LEFT_LANE_BUTTON = { x: 86, y: TUNING.VIRTUAL_H - 112, r: 46 } as const;
+export const LEFT_LANE_BUTTON = { x: 86, y: TUNING.VIRTUAL_H - 200, r: 46 } as const;
 export const RIGHT_LANE_BUTTON = {
   x: TUNING.VIRTUAL_W - 86,
-  y: TUNING.VIRTUAL_H - 112,
+  y: TUNING.VIRTUAL_H - 200,
   r: 46,
 } as const;
 

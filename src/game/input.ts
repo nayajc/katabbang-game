@@ -6,7 +6,7 @@
  * - desktop: ArrowLeft/ArrowRight lanes, Space/Enter counter (keydown, repeat ignored)
  * - every callback receives `event.timeStamp` (same time origin as performance.now())
  * - touch-event FALLBACK for browsers that never deliver pointer events; it
- *   disables itself permanently once any pointerdown is seen (see pointer-health)
+ *   stands down only while pointer events are recently alive (see pointer-health)
  */
 import { notePointerDown, pointerEventsWorking } from './pointer-health';
 
@@ -28,7 +28,7 @@ export function attachInput(el: HTMLElement, handlers: InputHandlers): () => voi
   let swiped = false;
 
   const onPointerDown = (e: PointerEvent) => {
-    notePointerDown();
+    notePointerDown(e.timeStamp);
     // Self-healing: a stale pointerId (e.g. a touch that ended without a
     // pointerup/pointercancel we saw — common on iOS when a system gesture or
     // browser chrome steals the touch) must never deafen input. Always adopt
@@ -91,7 +91,7 @@ export function attachInput(el: HTMLElement, handlers: InputHandlers): () => voi
   };
 
   // ---------------------------------------------------------------------
-  // Touch fallback. Only ever runs while pointer events have proven silent.
+  // Touch fallback. Only ever runs while pointer events are silent.
   // Uses the same startX/startY/startTs/swiped gesture state — the two paths
   // are mutually exclusive, so they can never interleave.
   // ---------------------------------------------------------------------
@@ -105,7 +105,7 @@ export function attachInput(el: HTMLElement, handlers: InputHandlers): () => voi
   };
 
   const onTouchStart = (e: TouchEvent) => {
-    if (pointerEventsWorking()) return;
+    if (pointerEventsWorking(e.timeStamp)) return;
     const t = e.changedTouches[0];
     if (!t) return;
     touchId = t.identifier;
@@ -117,7 +117,7 @@ export function attachInput(el: HTMLElement, handlers: InputHandlers): () => voi
   };
 
   const onTouchMove = (e: TouchEvent) => {
-    if (pointerEventsWorking() || touchId === null || swiped) return;
+    if (pointerEventsWorking(e.timeStamp) || touchId === null || swiped) return;
     const t = findTouch(e.changedTouches);
     if (!t) return;
     const dx = t.clientX - startX;
@@ -129,7 +129,7 @@ export function attachInput(el: HTMLElement, handlers: InputHandlers): () => voi
   };
 
   const onTouchEnd = (e: TouchEvent) => {
-    if (pointerEventsWorking() || touchId === null) return;
+    if (pointerEventsWorking(e.timeStamp) || touchId === null) return;
     if (!findTouch(e.changedTouches)) return;
     touchId = null;
     if (!swiped && e.timeStamp - startTs <= TAP_MS) {

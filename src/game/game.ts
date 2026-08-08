@@ -74,7 +74,7 @@ export class Game {
   private resultStart = 0;
   private hitstopUntil = 0;
   private detachInput: () => void;
-  private detachFx: () => void;
+  private detachButtons: () => void;
   private onGameOver?: (info: GameOverInfo) => void;
   private fx = new Fx();
   private lastFxTs = 0;
@@ -117,7 +117,7 @@ export class Game {
     };
 
     const onButtonTap = (e: PointerEvent) => {
-      notePointerDown();
+      notePointerDown(e.timeStamp);
       if (!tryButtonTap(e.clientX, e.clientY)) return;
       e.preventDefault();
       e.stopImmediatePropagation();
@@ -125,7 +125,7 @@ export class Game {
     // Touch fallback for browsers that never deliver pointerdown. Registered
     // before attachInput's own touch listeners so it can swallow the gesture.
     const onButtonTouch = (e: TouchEvent) => {
-      if (pointerEventsWorking()) return;
+      if (pointerEventsWorking(e.timeStamp)) return;
       const t = e.changedTouches[0];
       if (!t) return;
       if (!tryButtonTap(t.clientX, t.clientY)) return;
@@ -134,7 +134,7 @@ export class Game {
     };
     this.canvas.addEventListener('pointerdown', onButtonTap, { passive: false });
     this.canvas.addEventListener('touchstart', onButtonTouch as EventListener, { passive: false });
-    this.detachFx = () => {
+    this.detachButtons = () => {
       this.canvas.removeEventListener('pointerdown', onButtonTap);
       this.canvas.removeEventListener('touchstart', onButtonTouch as EventListener);
       detachUnlock();
@@ -157,7 +157,7 @@ export class Game {
   destroy(): void {
     this.engine.stop();
     this.detachInput();
-    this.detachFx();
+    this.detachButtons();
   }
 
   /** title/gameover -> running. Also used by the "다시 하기" button. */

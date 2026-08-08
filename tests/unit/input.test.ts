@@ -42,6 +42,14 @@ function makeHandlers() {
   };
 }
 
+/** Fresh element + handlers with attachInput already wired up. */
+function setup() {
+  const el = makeEl();
+  const h = makeHandlers();
+  attachInput(el as unknown as HTMLElement, h);
+  return { el, h };
+}
+
 const win = { addEventListener() {}, removeEventListener() {} };
 
 beforeEach(() => {
@@ -54,9 +62,7 @@ afterEach(() => {
 
 describe('attachInput pointer tracking', () => {
   it('still accepts taps after a pointercancel ends the gesture', () => {
-    const el = makeEl();
-    const h = makeHandlers();
-    attachInput(el as unknown as HTMLElement, h);
+    const { el, h } = setup();
 
     el.fire('pointerdown', { pointerId: 1, clientX: 10, clientY: 10, timeStamp: 0 });
     el.fire('pointercancel', { pointerId: 1, clientX: 10, clientY: 10, timeStamp: 20 });
@@ -69,9 +75,7 @@ describe('attachInput pointer tracking', () => {
   });
 
   it('self-heals when a pointerdown arrives while an old pointer is still tracked', () => {
-    const el = makeEl();
-    const h = makeHandlers();
-    attachInput(el as unknown as HTMLElement, h);
+    const { el, h } = setup();
 
     // Pointer 1 never ends (touch stolen by a system gesture, no cancel seen).
     el.fire('pointerdown', { pointerId: 1, clientX: 10, clientY: 10, timeStamp: 0 });
@@ -82,9 +86,7 @@ describe('attachInput pointer tracking', () => {
   });
 
   it('captures the pointer on pointerdown and releases it on pointerup', () => {
-    const el = makeEl();
-    const h = makeHandlers();
-    attachInput(el as unknown as HTMLElement, h);
+    const { el } = setup();
 
     el.fire('pointerdown', { pointerId: 7, clientX: 0, clientY: 0, timeStamp: 0 });
     expect(el.captured.has(7)).toBe(true);
@@ -93,9 +95,7 @@ describe('attachInput pointer tracking', () => {
   });
 
   it('clears tracking on lostpointercapture', () => {
-    const el = makeEl();
-    const h = makeHandlers();
-    attachInput(el as unknown as HTMLElement, h);
+    const { el, h } = setup();
 
     el.fire('pointerdown', { pointerId: 3, clientX: 0, clientY: 0, timeStamp: 0 });
     el.fire('lostpointercapture', { pointerId: 3 });
@@ -105,9 +105,7 @@ describe('attachInput pointer tracking', () => {
   });
 
   it('still detects swipes end to end', () => {
-    const el = makeEl();
-    const h = makeHandlers();
-    attachInput(el as unknown as HTMLElement, h);
+    const { el, h } = setup();
 
     el.fire('pointerdown', { pointerId: 1, clientX: 0, clientY: 0, timeStamp: 0 });
     el.fire('pointermove', { pointerId: 1, clientX: 60, clientY: 2, timeStamp: 30 });
@@ -124,9 +122,7 @@ function touches(list: Array<{ identifier: number; clientX: number; clientY: num
 
 describe('attachInput touch fallback', () => {
   it('ignores touch events once pointer events have proven to work', () => {
-    const el = makeEl();
-    const h = makeHandlers();
-    attachInput(el as unknown as HTMLElement, h);
+    const { el, h } = setup();
 
     // A working pointer gesture latches the health flag.
     el.fire('pointerdown', { pointerId: 1, clientX: 10, clientY: 10, timeStamp: 0 });
@@ -147,9 +143,7 @@ describe('attachInput touch fallback', () => {
   });
 
   it('drives counter taps from touch when pointer events never arrive', () => {
-    const el = makeEl();
-    const h = makeHandlers();
-    attachInput(el as unknown as HTMLElement, h);
+    const { el, h } = setup();
 
     el.fire('touchstart', {
       changedTouches: touches([{ identifier: 4, clientX: 10, clientY: 10 }]),
@@ -165,9 +159,7 @@ describe('attachInput touch fallback', () => {
   });
 
   it('drives lane swipes from touch when pointer events never arrive', () => {
-    const el = makeEl();
-    const h = makeHandlers();
-    attachInput(el as unknown as HTMLElement, h);
+    const { el, h } = setup();
 
     el.fire('touchstart', {
       changedTouches: touches([{ identifier: 1, clientX: 0, clientY: 0 }]),
@@ -186,9 +178,7 @@ describe('attachInput touch fallback', () => {
   });
 
   it('stops using the touch path as soon as a pointerdown finally shows up', () => {
-    const el = makeEl();
-    const h = makeHandlers();
-    attachInput(el as unknown as HTMLElement, h);
+    const { el, h } = setup();
 
     el.fire('touchstart', {
       changedTouches: touches([{ identifier: 1, clientX: 10, clientY: 10 }]),
@@ -211,5 +201,36 @@ describe('attachInput touch fallback', () => {
       timeStamp: 240,
     });
     expect(h.counters).toEqual([0, 200]);
+  });
+
+  it('re-arms the touch path when pointer events stop arriving again', () => {
+    const { el, h } = setup();
+
+    // Pointer events are alive at t=1000.
+    el.fire('pointerdown', { pointerId: 1, clientX: 10, clientY: 10, timeStamp: 1000 });
+    el.fire('pointerup', { pointerId: 1, clientX: 10, clientY: 10, timeStamp: 1010 });
+    expect(h.counters).toEqual([1000]);
+
+    // A compatibility touch 30ms later is inside the health window: suppressed.
+    el.fire('touchstart', {
+      changedTouches: touches([{ identifier: 1, clientX: 10, clientY: 10 }]),
+      timeStamp: 1030,
+    });
+    el.fire('touchend', {
+      changedTouches: touches([{ identifier: 1, clientX: 10, clientY: 10 }]),
+      timeStamp: 1040,
+    });
+    expect(h.counters).toEqual([1000]);
+
+    // Pointer events went silent since; a much later touch must work again.
+    el.fire('touchstart', {
+      changedTouches: touches([{ identifier: 2, clientX: 10, clientY: 10 }]),
+      timeStamp: 5000,
+    });
+    el.fire('touchend', {
+      changedTouches: touches([{ identifier: 2, clientX: 10, clientY: 10 }]),
+      timeStamp: 5030,
+    });
+    expect(h.counters).toEqual([1000, 5000]);
   });
 });

@@ -49,3 +49,4 @@ playwright-report/
 
 # keep the template committed even though .env* is ignored
 !.env.example
+.playwright-mcp/

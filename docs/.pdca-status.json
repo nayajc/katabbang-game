@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-08-08T08:16:38.000Z",
+  "lastUpdated": "2026-08-08T08:30:47.889Z",
   "activeFeatures": [
     "assets-staging",
     "game",
@@ -24,9 +24,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-08-08T06:54:28.140Z",
-        "lastUpdated": "2026-08-08T06:56:44.017Z"
+        "lastUpdated": "2026-08-08T08:27:01.066Z"
       },
-      "lastFile": "/Users/jcsong/codework/katabbang-game/.omc/state/assets-staging/postprocess.py"
+      "lastFile": "/Users/jcsong/codework/katabbang-game/.omc/state/assets-staging/generate_runcycle.py"
     },
     "game": {
       "phase": "do",
@@ -37,7 +37,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-08-08T06:57:17.913Z",
-        "lastUpdated": "2026-08-08T08:13:49.752Z"
+        "lastUpdated": "2026-08-08T08:30:47.889Z"
       },
       "lastFile": "/Users/jcsong/codework/katabbang-game/src/game/render.ts"
     },
@@ -89,9 +89,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-08-08T07:01:26.495Z",
-        "lastUpdated": "2026-08-08T07:14:35.143Z"
+        "lastUpdated": "2026-08-08T08:24:13.606Z"
       },
-      "lastFile": "/Users/jcsong/codework/katabbang-game/tests/unit/fx.test.ts"
+      "lastFile": "/Users/jcsong/codework/katabbang-game/tests/unit/anim.test.ts"
     },
     "e2e": {
       "phase": "do",
@@ -102,9 +102,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-08-08T07:02:14.518Z",
-        "lastUpdated": "2026-08-08T08:16:38.000Z"
+        "lastUpdated": "2026-08-08T08:24:57.916Z"
       },
-      "lastFile": "/Users/jcsong/codework/katabbang-game/tests/e2e/lane-buttons.spec.ts"
+      "lastFile": "/Users/jcsong/codework/katabbang-game/tests/e2e/animation.spec.ts"
     },
     "fx": {
       "phase": "do",
@@ -154,7 +154,7 @@
   "session": {
     "startedAt": "2026-08-08T06:23:19.873Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-08-08T08:16:38.000Z"
+    "lastActivity": "2026-08-08T08:30:47.889Z"
   },
   "history": [
     {
@@ -646,6 +646,156 @@
     {
       "timestamp": "2026-08-08T08:16:38.000Z",
       "feature": "e2e",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T08:22:59.201Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T08:23:04.692Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T08:23:16.470Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T08:23:22.236Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T08:23:28.152Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T08:23:33.231Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T08:23:37.766Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T08:23:42.667Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T08:23:46.855Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T08:24:02.244Z",
+      "feature": "unit",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T08:24:13.606Z",
+      "feature": "unit",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T08:24:57.916Z",
+      "feature": "e2e",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T08:26:14.839Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T08:26:20.117Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T08:26:26.028Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T08:27:01.066Z",
+      "feature": "assets-staging",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T08:29:50.785Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T08:29:55.803Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T08:30:04.355Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T08:30:10.283Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T08:30:18.636Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T08:30:25.330Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T08:30:32.257Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T08:30:40.329Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T08:30:47.889Z",
+      "feature": "game",
       "phase": "do",
       "action": "updated"
     }

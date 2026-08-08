@@ -1,6 +1,17 @@
+import {
+  bumperPose,
+  createPose,
+  pedestrianPose,
+  playerCounterPose,
+  playerRunPose,
+  type Pose,
+} from './anim';
 import type { GameView } from './game';
-import { getSprite, pedestrianSprite, type SpriteName } from './sprites';
+import { getSprite, pedestrianSprite, playerRunFrame, type SpriteName } from './sprites';
 import { TUNING } from './tuning';
+
+/** Single scratch pose reused by every character each frame — never allocates. */
+const POSE: Pose = createPose();
 
 /**
  * Canvas renderer: sprites + FX, with a shape/emoji fallback that is used until
@@ -143,11 +154,32 @@ function drawSprite(ctx: CanvasRenderingContext2D, name: SpriteName, height: num
   return true;
 }
 
+/**
+ * Applies a gait pose to the current transform. Squash/stretch pivots on the
+ * feet (`+height/2`) rather than the centre, so a compressing character sinks
+ * into the ground instead of shrinking in place.
+ */
+function applyPose(ctx: CanvasRenderingContext2D, pose: Pose, height: number) {
+  ctx.translate(pose.sway, pose.bob);
+  const foot = height / 2;
+  ctx.translate(0, foot);
+  ctx.scale(pose.scaleX, pose.scaleY);
+  ctx.rotate(pose.rot);
+  ctx.translate(0, -foot);
+}
+
 function drawEntity(ctx: CanvasRenderingContext2D, view: GameView, e: GameView['entities'][number]) {
   const isBumper = e.kind === 'bumper';
+  const height = TUNING.ENTITY_R * 2.9;
   ctx.save();
   ctx.translate(e.x, e.y);
-  if (e.knockback) ctx.rotate(e.knockback.rot);
+  if (e.knockback) {
+    ctx.rotate(e.knockback.rot);
+  } else if (isBumper) {
+    applyPose(ctx, bumperPose(POSE, e.id, view.scrollY, view.player.y - e.y), height);
+  } else {
+    applyPose(ctx, pedestrianPose(POSE, e.id, view.scrollY), height);
+  }
 
   const sprite: SpriteName = isBumper
     ? e.knockback
@@ -155,7 +187,7 @@ function drawEntity(ctx: CanvasRenderingContext2D, view: GameView, e: GameView['
       : 'bumper_walk'
     : pedestrianSprite(e.id);
 
-  if (!drawSprite(ctx, sprite, TUNING.ENTITY_R * 2.9)) {
+  if (!drawSprite(ctx, sprite, height)) {
     ctx.fillStyle = isBumper ? '#ff5c7a' : '#5c7cff';
     ctx.beginPath();
     ctx.arc(0, 0, TUNING.ENTITY_R, 0, Math.PI * 2);
@@ -187,9 +219,20 @@ function drawCounterRing(ctx: CanvasRenderingContext2D, x: number, y: number, le
 function drawPlayer(ctx: CanvasRenderingContext2D, view: GameView) {
   const p = view.player;
   const countering = view.phase === 'slowmo' || (view.phase === 'result' && view.lastGrade !== null);
+  const height = TUNING.PLAYER_R * 3;
+  // Real run-cycle frames when they have decoded; the single pose otherwise.
+  // The procedural gait is damped when the frames carry the leg motion.
+  const frame = countering ? null : playerRunFrame(view.scrollY);
   ctx.save();
   ctx.translate(p.x, p.y);
-  if (!drawSprite(ctx, countering ? 'player_counter' : 'player_run', TUNING.PLAYER_R * 3)) {
+  applyPose(
+    ctx,
+    countering
+      ? playerCounterPose(POSE, view.fx.slowmo)
+      : playerRunPose(POSE, view.scrollY, view.speed, frame ? 0.45 : 1),
+    height,
+  );
+  if (!drawSprite(ctx, countering ? 'player_counter' : (frame ?? 'player_run'), height)) {
     ctx.fillStyle = '#ffe066';
     ctx.beginPath();
     ctx.arc(0, 0, TUNING.PLAYER_R, 0, Math.PI * 2);

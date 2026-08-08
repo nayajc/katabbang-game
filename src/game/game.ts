@@ -39,6 +39,8 @@ export type GameView = {
   entities: Entity[];
   score: Score;
   scrollY: number;
+  /** Current world scroll speed (vu/s of simulated time); scales the run cycle. */
+  speed: number;
   lastGrade: Grade | null;
   lastGain: number;
   /** 0..1 progress of the result banner, for pop/fade animation. */
@@ -318,6 +320,7 @@ export class Game {
       entities: this.entities,
       score: this.score,
       scrollY: this.scrollY,
+      speed: this.speed,
       lastGrade: this.lastGrade,
       lastGain: this.lastGain,
       resultProgress: this.sm.is('result')

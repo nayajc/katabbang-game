@@ -21,6 +21,18 @@ describe('CounterWindow', () => {
     expect(w.windowCenterTs).toBeCloseTo(1000 + 300 / TUNING.SLOWMO_TIMESCALE, 6);
   });
 
+  it('does not charge wall time for simulated ms the engine already accumulated', () => {
+    const w = new CounterWindow();
+    w.arm(entity(), 300, 1000, 60);
+    expect(w.windowCenterTs).toBeCloseTo(1000 + 240 / TUNING.SLOWMO_TIMESCALE, 6);
+  });
+
+  it('never centres in the past when the pending accumulator exceeds the impact time', () => {
+    const w = new CounterWindow();
+    w.arm(entity(), 10, 1000, 500);
+    expect(w.windowCenterTs).toBe(1000);
+  });
+
   it('judges the input against the wall-clock centre', () => {
     const w = new CounterWindow();
     w.arm(entity(), 0, 1000);

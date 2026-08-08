@@ -43,6 +43,14 @@ export class Engine {
     document.removeEventListener('visibilitychange', this.onVisibility);
   }
 
+  /**
+   * Simulated ms accumulated but not yet stepped. Their wall-clock cost is
+   * already spent, so time-to-impact predictions must subtract this.
+   */
+  get pendingSimMs(): number {
+    return this.acc;
+  }
+
   get isPaused(): boolean {
     return this.paused;
   }

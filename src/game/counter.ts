@@ -3,11 +3,28 @@ import { TUNING } from './tuning';
 import type { Entity } from './entities/spawner';
 
 /**
+ * Simulated ms for the world to scroll `dist` vu, accounting for the linear
+ * speed ramp (`SPEED_PER_SEC` vu/s per second). Solves
+ * `dist = v0*t + a*t^2 / 2` for t, in seconds, then converts to ms.
+ */
+export function simMsToTravel(dist: number, speed: number): number {
+  if (dist <= 0) return 0;
+  const a = TUNING.SPEED_PER_SEC;
+  if (speed >= TUNING.MAX_SPEED || a <= 0) return (dist / speed) * 1000;
+  const t = (Math.sqrt(speed * speed + 2 * a * dist) - speed) / a;
+  return t * 1000;
+}
+
+/**
  * Counter (어깨빵 반격) window controller.
  *
  * Slow motion scales the *simulation* only, so the wall-clock time until impact
  * is `simMsToImpact / SLOWMO_TIMESCALE`. The resulting `windowCenterTs` lives on
  * the `performance.now()` timeline, identical to `PointerEvent.timeStamp`.
+ *
+ * `pendingSimMs` is the engine's un-stepped accumulator: simulated time whose
+ * wall-clock cost was ALREADY paid, so it must not be charged again. Ignoring it
+ * pushed the window centre up to `FIXED_DT / SLOWMO_TIMESCALE` (~55ms) late.
  */
 export class CounterWindow {
   target: Entity | null = null;
@@ -18,10 +35,11 @@ export class CounterWindow {
     return this.target !== null && !this.resolved;
   }
 
-  arm(target: Entity, simMsToImpact: number, wallNow: number): void {
+  arm(target: Entity, simMsToImpact: number, wallNow: number, pendingSimMs = 0): void {
     this.target = target;
     this.resolved = false;
-    this.windowCenterTs = wallNow + simMsToImpact / TUNING.SLOWMO_TIMESCALE;
+    const billableSimMs = Math.max(0, simMsToImpact - pendingSimMs);
+    this.windowCenterTs = wallNow + billableSimMs / TUNING.SLOWMO_TIMESCALE;
   }
 
   /** Judge a counter input. Returns null when no window is armed. */

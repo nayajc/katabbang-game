@@ -51,6 +51,7 @@ export default function GameCanvas({ onGameOver }: GameCanvasProps) {
 
     const game = new Game({
       canvas,
+      debug: new URLSearchParams(window.location.search).get('debug') === '1',
       onPhase: setPhase,
       onGameOver: (info) => {
         setResult(info);

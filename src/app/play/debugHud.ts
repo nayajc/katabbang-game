@@ -101,6 +101,8 @@ export function mountDebugHud(canvas: HTMLCanvasElement): () => void {
         v ? `${round(v.x)},${round(v.y)}` : '-'
       }`,
       `phase=${stage?.dataset.phase ?? '-'} lane=${canvas.dataset.playerLane ?? '-'}`,
+      // "grade:deltaMs" published by Game.noteJudge — negative delta = tapped early.
+      `judge=${stage?.dataset.lastJudge ?? '-'} lead=${stage?.dataset.counterLead ?? '-'}ms`,
       `canvas=${canvas.width}x${canvas.height} css=${round(rect.width)}x${round(rect.height)} dpr=${window.devicePixelRatio}`,
       `innerH=${window.innerHeight} vvH=${
         window.visualViewport ? round(window.visualViewport.height) : '-'

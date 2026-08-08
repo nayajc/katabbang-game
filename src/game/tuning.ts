@@ -45,9 +45,17 @@ export const TUNING = {
   SLOWMO_TIMESCALE: 0.3,
   /** Distance (vu) ahead of the player at which slowmo engages. */
   SLOWMO_TRIGGER_DIST: 320,
+  /**
+   * Centre-to-centre gap (vu) at which the bumper VISUALLY reaches the player —
+   * i.e. the moment the two bodies touch. MUST equal PLAYER_R + ENTITY_R.
+   * The counter window centres here, not on gap === 0 (fully overlapped sprites).
+   */
+  COUNTER_IMPACT_GAP: 34 + 32,
+  /** Wall-clock lead (ms) over which the approach ring shrinks onto the target. */
+  COUNTER_CUE_LEAD_MS: 900,
   /** Wall-clock judgement windows (ms). */
-  PERFECT_MS: 60,
-  GOOD_MS: 140,
+  PERFECT_MS: 100,
+  GOOD_MS: 250,
   /** Extra wall-clock grace after the window closes before declaring a miss. */
   MISS_GRACE_MS: 60,
   /** Wall-clock hitstop after a successful counter. */

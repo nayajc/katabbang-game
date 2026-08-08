@@ -1,6 +1,6 @@
 import { audio } from './audio';
 import { now } from './clock';
-import { CounterWindow } from './counter';
+import { CounterWindow, simMsToTravel } from './counter';
 import { Engine } from './engine';
 import { Player } from './entities/player';
 import { collides, Spawner, type Entity } from './entities/spawner';
@@ -29,6 +29,8 @@ export type GameOverInfo = {
 export type GameOptions = {
   canvas: HTMLCanvasElement;
   seed?: number;
+  /** ?debug=1 only: mirror per-frame counter timing onto the stage dataset. */
+  debug?: boolean;
   onGameOver?: (info: GameOverInfo) => void;
   onPhase?: (phase: Phase) => void;
 };
@@ -78,6 +80,7 @@ export class Game {
   private onGameOver?: (info: GameOverInfo) => void;
   private fx = new Fx();
   private lastFxTs = 0;
+  private debug: boolean;
   private lanePressDir: -1 | 1 | null = null;
   private lanePressUntil = 0;
 
@@ -86,6 +89,7 @@ export class Game {
     const ctx = opts.canvas.getContext('2d');
     if (!ctx) throw new Error('2D context unavailable');
     this.ctx = ctx;
+    this.debug = opts.debug ?? false;
     this.seed = opts.seed ?? (Date.now() & 0xffffffff) >>> 0;
     this.spawner = new Spawner(createRng(this.seed));
     this.onGameOver = opts.onGameOver;
@@ -184,8 +188,12 @@ export class Game {
       return;
     }
     if (!this.sm.is('slowmo') || !this.counter.active) return;
+    const deltaMs = ts - this.counter.windowCenterTs;
     const grade = this.counter.submit(ts);
-    if (grade) this.resolveCounter(grade);
+    if (grade) {
+      this.noteJudge(grade, deltaMs);
+      this.resolveCounter(grade);
+    }
   }
 
   private onLane(dir: -1 | 1): void {
@@ -205,6 +213,16 @@ export class Game {
       default:
         return 0;
     }
+  }
+
+  /**
+   * Publishes the last timing judgement as `data-last-judge="grade:deltaMs"` on
+   * the stage element (negative = early). Diagnostics only — never gameplay.
+   */
+  private noteJudge(grade: Grade, deltaMs: number): void {
+    const rounded = Math.round(deltaMs);
+    const stage = this.canvas.closest<HTMLElement>('[data-phase]') ?? this.canvas;
+    stage.dataset.lastJudge = `${grade}:${rounded >= 0 ? '+' : ''}${rounded}`;
   }
 
   private resolveCounter(grade: Grade): void {
@@ -289,7 +307,10 @@ export class Game {
     this.checkCollisions();
     this.checkBumperEngage();
 
-    if (this.counter.isExpired(now())) this.resolveCounter(this.counter.expire());
+    if (this.counter.isExpired(now())) {
+      this.noteJudge('miss', now() - this.counter.windowCenterTs);
+      this.resolveCounter(this.counter.expire());
+    }
 
     this.entities = this.entities.filter((e) => !e.dead);
   }
@@ -318,9 +339,13 @@ export class Game {
       if (e.lane !== this.player.lane) continue;
       const gap = this.player.y - e.y;
       if (gap <= 0 || gap > TUNING.SLOWMO_TRIGGER_DIST) continue;
+      // Impact is when the bodies TOUCH (gap === COUNTER_IMPACT_GAP), which is
+      // what the player sees — not when the sprites fully overlap (gap === 0).
+      const travel = gap - TUNING.COUNTER_IMPACT_GAP;
+      if (travel <= 0) continue;
       e.engaged = true;
-      const simMsToImpact = (gap / this.speed) * 1000;
-      this.counter.arm(e, simMsToImpact, now());
+      const simMsToImpact = simMsToTravel(travel, this.speed);
+      this.counter.arm(e, simMsToImpact, now(), this.engine.pendingSimMs);
       this.sm.set('slowmo');
       return;
     }
@@ -349,6 +374,15 @@ export class Game {
       muted: audio.muted,
       lanePressed: wallTs < this.lanePressUntil ? this.lanePressDir : null,
     };
+    // Diagnostics only, and only under ?debug=1 — a per-frame dataset write is
+    // an attribute mutation the normal render path must never pay for.
+    if (this.debug) {
+      const stage = this.canvas.closest<HTMLElement>('[data-phase]') ?? this.canvas;
+      stage.dataset.counterLead = this.counter.active
+        ? String(Math.round(view.counterLeadMs))
+        : '-';
+    }
+
     render(this.ctx, this.canvas, view);
   }
 }

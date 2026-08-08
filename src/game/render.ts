@@ -205,15 +205,34 @@ function drawEntity(ctx: CanvasRenderingContext2D, view: GameView, e: GameView['
   }
 }
 
+/**
+ * Timing cue: an approach ring that shrinks onto a fixed target ring and closes
+ * EXACTLY at `windowCenterTs` (leadMs === 0). Tap when the rings coincide.
+ * Wall-clock driven, so it keeps moving through slowmo and hitstop.
+ */
 function drawCounterRing(ctx: CanvasRenderingContext2D, x: number, y: number, leadMs: number) {
-  const span = 600;
-  const k = Math.max(0, Math.min(1, leadMs / span));
+  const base = TUNING.ENTITY_R + 14;
+  const reach = 110;
+  const k = Math.max(0, Math.min(1, leadMs / TUNING.COUNTER_CUE_LEAD_MS));
+  const inPerfect = Math.abs(leadMs) <= TUNING.PERFECT_MS;
+  const inGood = Math.abs(leadMs) <= TUNING.GOOD_MS;
+
   ctx.save();
-  ctx.strokeStyle = k < 0.2 ? '#ffd93d' : '#ffffff88';
-  ctx.lineWidth = 5;
+  // Fixed target ring — the thing the approach ring lands on.
+  ctx.strokeStyle = inPerfect ? '#ffd93d' : inGood ? '#7ee787' : '#ffffff55';
+  ctx.lineWidth = inPerfect ? 7 : 4;
   ctx.beginPath();
-  ctx.arc(x, y, TUNING.ENTITY_R + 14 + k * 90, 0, Math.PI * 2);
+  ctx.arc(x, y, base, 0, Math.PI * 2);
   ctx.stroke();
+
+  // Approach ring, only while it is still outside the target.
+  if (leadMs > 0) {
+    ctx.strokeStyle = '#ffffffcc';
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.arc(x, y, base + k * reach, 0, Math.PI * 2);
+    ctx.stroke();
+  }
   ctx.restore();
 }
 

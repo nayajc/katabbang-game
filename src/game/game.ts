@@ -56,6 +56,10 @@ export type GameView = {
   muted: boolean;
   /** Lane button showing its pressed highlight this frame, if any. */
   lanePressed: -1 | 1 | null;
+  /** 1 -> 0 over HIT_FLASH_MS after an hp loss; drives the red flash + hp flash. */
+  hitFlash: number;
+  /** Sprite alpha for the i-frame blink (1 when not invulnerable). */
+  playerAlpha: number;
 };
 
 export class Game {
@@ -83,6 +87,10 @@ export class Game {
   private debug: boolean;
   private lanePressDir: -1 | 1 | null = null;
   private lanePressUntil = 0;
+  /** Wall-clock end of the post-hit invulnerability window. */
+  private invulnUntil = 0;
+  /** Wall-clock start of the red hit flash. */
+  private hitFlashStart = -Infinity;
 
   constructor(opts: GameOptions) {
     this.canvas = opts.canvas;
@@ -176,6 +184,8 @@ export class Game {
     this.scrollY = 0;
     this.lastGrade = null;
     this.lastGain = 0;
+    this.invulnUntil = 0;
+    this.hitFlashStart = -Infinity;
     this.fx.reset();
     this.canvas.dataset.playerLane = String(this.player.lane);
     this.sm.set('running');
@@ -200,6 +210,22 @@ export class Game {
     if (!this.sm.is('running', 'slowmo')) return;
     this.player.move(dir);
     this.canvas.dataset.playerLane = String(this.player.lane);
+  }
+
+  /** True while post-hit i-frames are running (collisions and engages ignored). */
+  private get invulnerable(): boolean {
+    return now() < this.invulnUntil;
+  }
+
+  /**
+   * Shared reaction to ANY hp loss: i-frames, red flash, comic text and a
+   * heavier shake. Without the i-frames a single mistake chains 3 hp -> 0
+   * inside a few frames, which reads to the player as "the controls did nothing".
+   */
+  private noteHpLoss(x: number, y: number): void {
+    this.invulnUntil = now() + TUNING.IFRAME_MS;
+    this.hitFlashStart = now();
+    this.fx.hurt(x, y);
   }
 
   private timescale(): number {
@@ -243,6 +269,9 @@ export class Game {
     if (grade === 'miss') {
       this.fx.counterMiss(fxX, fxY);
       audio.play('miss');
+      // A whiffed / expired window costs hp, so it grants i-frames exactly like
+      // a pedestrian collision — including when the window simply timed out.
+      this.noteHpLoss(this.player.x, this.player.y);
     } else {
       const dir: -1 | 1 = target && target.x < this.player.x ? -1 : 1;
       this.fx.counterHit(fxX, fxY, grade === 'perfect', dir);
@@ -280,6 +309,8 @@ export class Game {
       this.sm.set('running');
     }
 
+    this.player.update(dt);
+
     const secs = dt / 1000;
     this.speed = Math.min(TUNING.MAX_SPEED, this.speed + TUNING.SPEED_PER_SEC * secs);
     const advance = this.speed * secs;
@@ -316,13 +347,16 @@ export class Game {
   }
 
   private checkCollisions(): void {
+    if (this.invulnerable) return;
     for (const e of this.entities) {
       if (e.dead || e.knockback || e.engaged) continue;
       if (e.kind === 'bumper') continue;
-      if (!collides(e, this.player.x, this.player.y)) continue;
+      // Collision uses the TARGET lane centre, not the tweened visual x, so a
+      // lane change dodges on the input frame rather than 120ms later.
+      if (!collides(e, this.player.laneX, this.player.y)) continue;
       e.dead = true;
       applyHit(this.score);
-      this.fx.collision(e.x, e.y);
+      this.noteHpLoss(e.x, e.y);
       audio.play('collision');
       this.lastGrade = null;
       if (this.score.hp <= 0) {
@@ -333,7 +367,7 @@ export class Game {
   }
 
   private checkBumperEngage(): void {
-    if (!this.sm.is('running') || this.counter.active) return;
+    if (!this.sm.is('running') || this.counter.active || this.invulnerable) return;
     for (const e of this.entities) {
       if (e.kind !== 'bumper' || e.dead || e.engaged || e.knockback) continue;
       if (e.lane !== this.player.lane) continue;
@@ -373,6 +407,13 @@ export class Game {
       fx: this.fx,
       muted: audio.muted,
       lanePressed: wallTs < this.lanePressUntil ? this.lanePressDir : null,
+      hitFlash: Math.max(0, 1 - (wallTs - this.hitFlashStart) / TUNING.HIT_FLASH_MS),
+      playerAlpha:
+        wallTs < this.invulnUntil
+          ? Math.floor(wallTs / TUNING.IFRAME_BLINK_MS) % 2 === 0
+            ? 1
+            : 0.3
+          : 1,
     };
     // Diagnostics only, and only under ?debug=1 — a per-frame dataset write is
     // an attribute mutation the normal render path must never pay for.

@@ -7,6 +7,7 @@
 import { ComicTextSystem } from './comic';
 import { ParticleSystem } from './particles';
 import { ScreenShake } from './shake';
+import { TUNING } from '../tuning';
 
 const PERFECT_COLORS = ['#ffd93d', '#ffffff', '#ff9f1c'] as const;
 const GOOD_COLORS = ['#7ee787', '#ffffff', '#3fb950'] as const;
@@ -92,20 +93,24 @@ export class Fx {
     this.comic.pop('으악!', x, y - 40, { size: 46, color: '#ff6b6b', life: 700 });
   }
 
-  /** Pedestrian collision. */
-  collision(x: number, y: number): void {
+  /**
+   * Any hp loss (pedestrian collision or a whiffed counter). Deliberately
+   * louder than a near-miss: the player must be able to tell hp went down
+   * without reading the HUD.
+   */
+  hurt(x: number, y: number): void {
     this.particles.burst(x, y, {
-      count: 16,
-      speed: 300,
-      speedJitter: 160,
-      life: 380,
+      count: 22,
+      speed: 340,
+      speedJitter: 180,
+      life: 420,
       lifeJitter: 140,
-      size: 5,
+      size: 6,
       colors: HIT_COLORS,
       gravity: 800,
     });
-    this.shake.kick(13);
-    this.comic.pop('쿵!', x, y - 30, { size: 38, color: '#ff6b6b', life: 560 });
+    this.shake.kick(TUNING.HIT_SHAKE);
+    this.comic.pop('아야!', x, y - 34, { size: 48, color: '#ff6b6b', life: 620, burst: true });
   }
 
   comboUp(combo: number, x: number, y: number): void {

@@ -38,7 +38,9 @@ describe('Spawner determinism', () => {
   const run = (seed: number) => {
     const s = new Spawner(createRng(seed));
     const out: string[] = [];
-    for (let i = 0; i < 400; i += 1) {
+    // Long enough to clear the opening grace period and sample well into the
+    // difficulty ramp (~50s of simulated time).
+    for (let i = 0; i < 3000; i += 1) {
       for (const e of s.update(16.6667, false)) out.push(`${e.kind}:${e.lane}`);
     }
     return out;

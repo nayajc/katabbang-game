@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-08-08T12:57:08.209Z",
+  "lastUpdated": "2026-08-08T13:28:59.420Z",
   "activeFeatures": [
     "assets-staging",
     "game",
@@ -38,9 +38,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-08-08T06:57:17.913Z",
-        "lastUpdated": "2026-08-08T10:21:26.352Z"
+        "lastUpdated": "2026-08-08T13:22:09.384Z"
       },
-      "lastFile": "/Users/jcsong/codework/katabbang-game/src/game/render.ts"
+      "lastFile": "/Users/jcsong/codework/katabbang-game/src/game/tuning.ts"
     },
     "entities": {
       "phase": "do",
@@ -51,9 +51,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-08-08T06:58:20.415Z",
-        "lastUpdated": "2026-08-08T06:58:31.472Z"
+        "lastUpdated": "2026-08-08T13:20:31.091Z"
       },
-      "lastFile": "/Users/jcsong/codework/katabbang-game/src/game/entities/spawner.ts"
+      "lastFile": "/Users/jcsong/codework/katabbang-game/src/game/entities/player.ts"
     },
     "play": {
       "phase": "do",
@@ -90,9 +90,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-08-08T07:01:26.495Z",
-        "lastUpdated": "2026-08-08T10:23:30.853Z"
+        "lastUpdated": "2026-08-08T13:28:59.420Z"
       },
-      "lastFile": "/Users/jcsong/codework/katabbang-game/tests/unit/judge.test.ts"
+      "lastFile": "/Users/jcsong/codework/katabbang-game/tests/unit/rng.test.ts"
     },
     "e2e": {
       "phase": "do",
@@ -116,7 +116,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-08-08T07:10:33.088Z",
-        "lastUpdated": "2026-08-08T07:30:32.222Z"
+        "lastUpdated": "2026-08-08T13:17:21.697Z"
       },
       "lastFile": "/Users/jcsong/codework/katabbang-game/src/game/fx/index.ts"
     },
@@ -168,7 +168,7 @@
   "session": {
     "startedAt": "2026-08-08T06:23:19.873Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-08-08T12:57:08.209Z"
+    "lastActivity": "2026-08-08T13:28:59.420Z"
   },
   "history": [
     {
@@ -1158,6 +1158,198 @@
     {
       "timestamp": "2026-08-08T12:57:08.209Z",
       "feature": "e2e",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T13:15:16.010Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T13:15:27.589Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T13:15:34.780Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T13:15:52.140Z",
+      "feature": "entities",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T13:16:04.716Z",
+      "feature": "entities",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T13:16:11.777Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T13:16:17.659Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T13:16:23.531Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T13:16:32.522Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T13:16:40.177Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T13:16:45.881Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T13:16:53.837Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T13:16:59.030Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T13:17:06.671Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T13:17:16.637Z",
+      "feature": "fx",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T13:17:21.697Z",
+      "feature": "fx",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T13:17:27.936Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T13:17:37.931Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T13:17:45.721Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T13:17:54.956Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T13:18:09.841Z",
+      "feature": "entities",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T13:19:26.869Z",
+      "feature": "unit",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T13:19:45.288Z",
+      "feature": "unit",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T13:19:58.858Z",
+      "feature": "unit",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T13:20:16.138Z",
+      "feature": "unit",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T13:20:31.091Z",
+      "feature": "entities",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T13:20:38.738Z",
+      "feature": "unit",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T13:20:44.602Z",
+      "feature": "unit",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T13:20:59.720Z",
+      "feature": "unit",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T13:21:25.163Z",
+      "feature": "unit",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T13:22:09.384Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-08T13:28:59.420Z",
+      "feature": "unit",
       "phase": "do",
       "action": "updated"
     }

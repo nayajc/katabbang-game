@@ -23,6 +23,8 @@ export const TUNING = {
   ENTITY_R: 32,
   /** Lane change duration (ms of simulated time). */
   LANE_CHANGE_MS: 120,
+  /** Peak body lean (radians) into the direction of a lane change. */
+  LANE_LEAN_RAD: 0.22,
 
   // --- speed / difficulty ---
   /** Base world scroll speed, vu per second of simulated time. */
@@ -33,18 +35,39 @@ export const TUNING = {
   DISTANCE_PER_VU: 0.05,
 
   // --- spawning (seeded) ---
-  /** Seconds of simulated time between spawn attempts, start and floor. */
-  SPAWN_INTERVAL_START: 900,
-  SPAWN_INTERVAL_MIN: 420,
-  SPAWN_INTERVAL_DECAY: 0.985,
+  /**
+   * Opening grace: simulated ms at the head of a run during which NOTHING
+   * spawns, so the player can feel the controls before the road fills up.
+   */
+  SPAWN_GRACE_MS: 2500,
+  /**
+   * Simulated ms after the grace period over which difficulty ramps from its
+   * opening values to full. Density and bumper frequency both use this ramp.
+   */
+  DIFFICULTY_RAMP_MS: 38_000,
+  /** Simulated ms between spawn attempts: sparse opening -> full-difficulty floor. */
+  SPAWN_INTERVAL_START: 1500,
+  SPAWN_INTERVAL_MIN: 460,
   /** Probability that a spawn is a bumper (어깨빵 시전자) rather than a pedestrian. */
+  BUMPER_CHANCE_START: 0.1,
   BUMPER_CHANCE: 0.32,
+  /**
+   * Minimum simulated ms between two bumper spawns at the start of a run,
+   * decaying to zero across the ramp. Stops back-to-back counter windows from
+   * stacking before the player has learned the timing.
+   */
+  BUMPER_MIN_GAP_MS: 4000,
 
   // --- counter / slowmo ---
   /** Simulation timescale while in slow motion. */
   SLOWMO_TIMESCALE: 0.3,
-  /** Distance (vu) ahead of the player at which slowmo engages. */
-  SLOWMO_TRIGGER_DIST: 320,
+  /**
+   * Distance (vu) ahead of the player at which slowmo engages. MUST stay below
+   * the distance at which a player can first read and react to an obstacle
+   * (~300vu), otherwise a bumper commits the player to a counter window before
+   * dodging into a free lane was ever an option.
+   */
+  SLOWMO_TRIGGER_DIST: 280,
   /**
    * Centre-to-centre gap (vu) at which the bumper VISUALLY reaches the player —
    * i.e. the moment the two bodies touch. MUST equal PLAYER_R + ENTITY_R.
@@ -65,6 +88,17 @@ export const TUNING = {
 
   // --- scoring / hp ---
   HP_MAX: 3,
+  /**
+   * Wall-clock invulnerability after ANY hp loss. Collisions are ignored and no
+   * new counter window arms, so one mistake can never chain 3 -> 0.
+   */
+  IFRAME_MS: 1200,
+  /** Wall-clock duration of the red hit flash / hp heart flash. */
+  HIT_FLASH_MS: 420,
+  /** Screen shake amplitude on hp loss (stronger than a counter whiff). */
+  HIT_SHAKE: 22,
+  /** Blink period (wall-clock ms) of the player sprite during i-frames. */
+  IFRAME_BLINK_MS: 130,
   COUNTER_BONUS: 300,
   /** Combo multiplier = 1 + combo * COMBO_STEP, capped. */
   COMBO_STEP: 0.25,

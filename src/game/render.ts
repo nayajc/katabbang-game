@@ -84,6 +84,7 @@ export function render(
   ctx.restore();
 
   if (fx.slowmo > 0.01) drawVignette(ctx, fx.slowmo);
+  if (view.hitFlash > 0.01) drawHitFlash(ctx, view.hitFlash);
   drawHud(ctx, view);
   drawMuteButton(ctx, view.muted);
   drawLaneButtons(ctx, view);
@@ -244,7 +245,15 @@ function drawPlayer(ctx: CanvasRenderingContext2D, view: GameView) {
   // The procedural gait is damped when the frames carry the leg motion.
   const frame = countering ? null : playerRunFrame(view.scrollY);
   ctx.save();
+  ctx.globalAlpha = view.playerAlpha;
   ctx.translate(p.x, p.y);
+  // Lean into the lane change. Applied before the gait pose so the pose's own
+  // squash/stretch still pivots on the (leaning) feet.
+  if (p.lean !== 0) {
+    ctx.translate(0, height / 2);
+    ctx.rotate(p.lean);
+    ctx.translate(0, -height / 2);
+  }
   applyPose(
     ctx,
     countering
@@ -296,6 +305,19 @@ function drawVignette(ctx: CanvasRenderingContext2D, weight: number) {
   ctx.restore();
 }
 
+/** Brief red vignette on hp loss — the "you just got hit" read. */
+function drawHitFlash(ctx: CanvasRenderingContext2D, weight: number) {
+  const cx = TUNING.VIRTUAL_W / 2;
+  const cy = TUNING.VIRTUAL_H / 2;
+  const g = ctx.createRadialGradient(cx, cy, TUNING.VIRTUAL_W * 0.2, cx, cy, TUNING.VIRTUAL_W);
+  g.addColorStop(0, 'rgba(255,0,32,0)');
+  g.addColorStop(1, `rgba(255,24,48,${0.72 * weight})`);
+  ctx.save();
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, TUNING.VIRTUAL_W, TUNING.VIRTUAL_H);
+  ctx.restore();
+}
+
 function drawHud(ctx: CanvasRenderingContext2D, view: GameView) {
   const s = view.score;
   ctx.save();
@@ -308,10 +330,22 @@ function drawHud(ctx: CanvasRenderingContext2D, view: GameView) {
   ctx.fillStyle = '#aab';
   ctx.fillText(`정의 ${s.justice}  콤보 ${s.combo}`, 28, 70);
 
+  // Hearts pulse and glow red for HIT_FLASH_MS after an hp loss, so the cost of
+  // a hit is legible in the HUD and not only in the world.
+  const flash = view.hitFlash;
   ctx.textAlign = 'right';
   ctx.font = '28px system-ui, sans-serif';
   ctx.fillStyle = '#fff';
-  ctx.fillText('❤️'.repeat(Math.max(0, s.hp)), TUNING.VIRTUAL_W - 28, 28);
+  ctx.translate(TUNING.VIRTUAL_W - 28, 28);
+  if (flash > 0.01) {
+    ctx.shadowColor = '#ff2d3f';
+    ctx.shadowBlur = 26 * flash;
+    const pop = 1 + 0.3 * flash;
+    ctx.translate(0, 14);
+    ctx.scale(pop, pop);
+    ctx.translate(0, -14);
+  }
+  ctx.fillText('❤️'.repeat(Math.max(0, s.hp)), 0, 0);
   ctx.restore();
 }
 

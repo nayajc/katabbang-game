@@ -8,6 +8,7 @@ import {
 } from './anim';
 import type { GameView } from './game';
 import { getSprite, pedestrianSprite, playerRunFrame, type SpriteName } from './sprites';
+import { getStrings } from '../lib/i18n';
 import { TUNING } from './tuning';
 
 /** Single scratch pose reused by every character each frame — never allocates. */
@@ -19,11 +20,11 @@ const POSE: Pose = createPose();
  * canvas HUD contract are unchanged — HUD must never become React state.
  */
 
-const GRADE_TEXT: Record<string, string> = {
-  perfect: '정의구현!',
-  good: '굿!',
-  miss: '으악!',
-};
+/** Resolved at draw time so a locale switch mid-run takes effect immediately. */
+function gradeText(grade: string): string {
+  const s = getStrings();
+  return grade === 'perfect' ? s.gradePerfect : grade === 'good' ? s.gradeGood : s.gradeMiss;
+}
 
 const GRADE_COLOR: Record<string, string> = {
   perfect: '#ffd93d',
@@ -328,7 +329,8 @@ function drawHud(ctx: CanvasRenderingContext2D, view: GameView) {
   ctx.fillText(`${Math.floor(s.distance) + Math.floor(s.counterScore)}`, 28, 28);
   ctx.font = '20px system-ui, sans-serif';
   ctx.fillStyle = '#aab';
-  ctx.fillText(`정의 ${s.justice}  콤보 ${s.combo}`, 28, 70);
+  const t = getStrings();
+  ctx.fillText(`${t.hudJustice} ${s.justice}  ${t.hudCombo} ${s.combo}`, 28, 70);
 
   // Hearts pulse and glow red for HIT_FLASH_MS after an hp loss, so the cost of
   // a hit is legible in the HUD and not only in the world.
@@ -398,7 +400,7 @@ function drawOverlay(ctx: CanvasRenderingContext2D, view: GameView) {
     ctx.textBaseline = 'middle';
     ctx.fillStyle = GRADE_COLOR[g];
     ctx.font = 'bold 64px system-ui, sans-serif';
-    ctx.fillText(GRADE_TEXT[g], 0, 0);
+    ctx.fillText(gradeText(g), 0, 0);
     if (view.lastGain > 0) {
       ctx.font = 'bold 32px system-ui, sans-serif';
       ctx.fillStyle = '#fff';
@@ -412,7 +414,7 @@ function drawOverlay(ctx: CanvasRenderingContext2D, view: GameView) {
     ctx.fillStyle = '#ffffffcc';
     ctx.textAlign = 'center';
     ctx.font = 'bold 34px system-ui, sans-serif';
-    ctx.fillText('지금이야! 탭!', TUNING.VIRTUAL_W / 2, TUNING.VIRTUAL_H * 0.3);
+    ctx.fillText(getStrings().tapNow, TUNING.VIRTUAL_W / 2, TUNING.VIRTUAL_H * 0.3);
     ctx.restore();
   }
 }

@@ -1,6 +1,6 @@
 /** Firestore leaderboard access. Every call degrades gracefully when Firebase is unconfigured. */
 import { ensureAnonymousUid, getDb, isFirebaseConfigured } from './firebase';
-import { checkNickname } from './nickname';
+import { checkNickname, type NicknameReason } from './nickname';
 
 export const SCORES_COLLECTION = 'scores';
 export const LEADERBOARD_LIMIT = 100;
@@ -27,7 +27,7 @@ export type SubmitInput = {
 export type SubmitResult =
   | { status: 'ok'; id: string; uid: string }
   | { status: 'unavailable' }
-  | { status: 'invalid'; reason: string }
+  | { status: 'invalid'; reason: NicknameReason }
   | { status: 'error'; reason: string };
 
 const clampInt = (value: number, max: number) =>

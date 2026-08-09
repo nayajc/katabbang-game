@@ -7,6 +7,9 @@ import { saveBestScore } from '@/lib/bestScore';
 import { isFirebaseConfigured } from '@/lib/firebase';
 import { submitScore } from '@/lib/leaderboard';
 import { shareScore } from '@/lib/share';
+import { formatNumber } from '@/lib/i18n';
+import { useStrings } from '@/lib/useLocale';
+import type { NicknameReason } from '@/lib/nickname';
 import type { GameOverInfo } from '@/game/game';
 import styles from './play.module.css';
 
@@ -20,8 +23,11 @@ export default function GameOverPanel({ result }: GameOverPanelProps) {
   const [message, setMessage] = useState<string | null>(null);
   const [entryId, setEntryId] = useState<string | null>(null);
   const [shareNote, setShareNote] = useState<string | null>(null);
+  const s = useStrings();
 
   const leaderboardOn = isFirebaseConfigured();
+  const nicknameMessage = (reason: NicknameReason) =>
+    reason === 'format' ? s.nicknameFormat : s.nicknameBanned;
 
   const onSubmit = async () => {
     setSubmitting(true);
@@ -36,28 +42,27 @@ export default function GameOverPanel({ result }: GameOverPanelProps) {
     if (outcome.status === 'ok') {
       setEntryId(outcome.id);
     } else if (outcome.status === 'invalid') {
-      setMessage(outcome.reason);
+      setMessage(nicknameMessage(outcome.reason));
     } else if (outcome.status === 'unavailable') {
-      setMessage('리더보드 준비 중');
+      setMessage(s.leaderboardPending);
     } else {
-      setMessage('등록에 실패했어요. 잠시 후 다시 시도해 주세요.');
+      setMessage(s.submitFailed);
     }
   };
 
   const onShare = async () => {
     const outcome = await shareScore(result.score);
     setShareNote(
-      outcome === 'copied'
-        ? '점수 링크를 복사했어요!'
-        : outcome === 'failed'
-          ? '공유에 실패했어요.'
-          : null,
+      outcome === 'copied' ? s.shareCopied : outcome === 'failed' ? s.shareFailed : null,
     );
   };
 
   return (
     <div className={styles.panel}>
-      <p className={styles.best}>최고 기록 {best.toLocaleString('ko-KR')}점</p>
+      <p className={styles.best}>
+        {s.bestRecord} {formatNumber(best)}
+        {s.scoreSuffix}
+      </p>
 
       {leaderboardOn && !entryId && (
         <div className={styles.formRow}>
@@ -65,9 +70,9 @@ export default function GameOverPanel({ result }: GameOverPanelProps) {
             className={styles.input}
             value={nickname}
             onChange={(event) => setNickname(event.target.value)}
-            placeholder="닉네임 (한글/영문/숫자 2~12자)"
+            placeholder={s.nicknamePlaceholder}
             maxLength={12}
-            aria-label="닉네임"
+            aria-label={s.nicknameAria}
             data-testid="nickname-input"
           />
           <button
@@ -77,12 +82,12 @@ export default function GameOverPanel({ result }: GameOverPanelProps) {
             disabled={submitting}
             data-testid="submit-score-button"
           >
-            {submitting ? '등록 중…' : '랭킹 등록'}
+            {submitting ? s.submitting : s.submit}
           </button>
         </div>
       )}
 
-      {!leaderboardOn && <p className={styles.desc}>리더보드 준비 중</p>}
+      {!leaderboardOn && <p className={styles.desc}>{s.leaderboardPending}</p>}
       {message && <p className={styles.desc} data-testid="submit-message">{message}</p>}
 
       {entryId && (
@@ -93,10 +98,10 @@ export default function GameOverPanel({ result }: GameOverPanelProps) {
 
       <div className={styles.formRow}>
         <button type="button" className={styles.smallButton} onClick={onShare} data-testid="share-button">
-          공유하기
+          {s.share}
         </button>
         <Link href="/leaderboard" className={styles.link} data-testid="leaderboard-link">
-          TOP 100 보기
+          {s.top100Link}
         </Link>
       </div>
       {shareNote && <p className={styles.desc}>{shareNote}</p>}

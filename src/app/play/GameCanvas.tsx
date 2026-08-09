@@ -5,13 +5,15 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Game, type GameOverInfo } from '@/game/game';
 import type { Phase } from '@/game/state';
 import { TUNING } from '@/game/tuning';
+import LocaleToggle from '@/app/LocaleToggle';
+import { useStrings } from '@/lib/useLocale';
 import styles from './play.module.css';
 
 // Loaded on demand: the panel pulls in the Firebase SDK, which must stay out of
 // the /play first-load bundle.
 const GameOverPanel = dynamic(() => import('./GameOverPanel'), {
   ssr: false,
-  loading: () => <p className={styles.desc}>불러오는 중…</p>,
+  loading: () => <p className={styles.desc} />,
 });
 
 export type GameCanvasProps = {
@@ -33,6 +35,7 @@ export default function GameCanvas({ onGameOver }: GameCanvasProps) {
   // Phase drives only the React overlays (title / game over) — never per-frame HUD.
   const [phase, setPhase] = useState<Phase>('title');
   const [result, setResult] = useState<GameOverInfo | null>(null);
+  const s = useStrings();
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -116,30 +119,39 @@ export default function GameCanvas({ onGameOver }: GameCanvasProps) {
 
       {phase === 'title' && (
         <div className={styles.overlay} data-testid="title-screen">
-          <h1 className={styles.title}>어깨빵 응징 러너</h1>
+          <h1 className={styles.title} data-testid="title-heading">
+            {s.title}
+          </h1>
           <p className={styles.desc}>
-            스와이프로 피하고, 어깨빵 시전자가 오면 <b>탭!</b>
+            {s.hintLine1}
             <br />
-            데스크톱: ←/→ 이동, Space/Enter 응징
+            {s.hintLine2}
+            <br />
+            {s.muteHint}
           </p>
           <button type="button" className={styles.button} onClick={startRun} data-testid="start-button">
-            시작하기
+            {s.start}
           </button>
+          <LocaleToggle />
         </div>
       )}
 
       {phase === 'gameover' && (
         <div className={styles.overlay} data-testid="gameover-screen">
-          <h2 className={styles.title}>게임 오버</h2>
-          <p className={styles.score}>{result?.score ?? 0}점</p>
+          <h2 className={styles.title}>{s.gameOver}</h2>
+          <p className={styles.score}>
+            {result?.score ?? 0}
+            {s.scoreSuffix}
+          </p>
           <p className={styles.desc}>
-            최고 콤보 {result?.bestCombo ?? 0} · 저스티스 {result?.justice ?? 0}
+            {s.bestComboLabel} {result?.bestCombo ?? 0} · {s.justiceLabel} {result?.justice ?? 0}
           </p>
           <button type="button" className={styles.button} onClick={startRun} data-testid="retry-button">
-            다시 하기
+            {s.retry}
           </button>
           {/* LEADERBOARD INTEGRATION POINT: nickname modal + TOP 100 link mount here. */}
           {result && <GameOverPanel key={result.seed} result={result} />}
+          <LocaleToggle />
         </div>
       )}
     </div>

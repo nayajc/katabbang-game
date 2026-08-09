@@ -27,7 +27,7 @@ service cloud.firestore {
       return data.keys().hasOnly(['nickname', 'score', 'distance', 'combo', 'createdAt', 'uid'])
         && data.keys().hasAll(['nickname', 'score', 'distance', 'combo', 'createdAt', 'uid'])
         && data.nickname is string
-        && data.nickname.matches('^[가-힣a-zA-Z0-9]{2,12}$')
+        && data.nickname.matches('^[가-힣a-zA-Z0-9一-龥]{2,12}$')
         && data.score is int && data.score >= 0 && data.score <= 10000000
         && data.distance is int && data.distance >= 0 && data.distance <= 10000000
         && data.combo is int && data.combo >= 0 && data.combo <= 10000000

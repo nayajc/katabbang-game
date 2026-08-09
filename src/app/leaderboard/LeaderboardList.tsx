@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { fetchTopScores, LEADERBOARD_LIMIT, type ScoreEntry } from '@/lib/leaderboard';
+import { formatNumber } from '@/lib/i18n';
+import { useStrings } from '@/lib/useLocale';
 import styles from './leaderboard.module.css';
 
 export type LeaderboardListProps = {
@@ -21,6 +23,7 @@ export default function LeaderboardList({
 }: LeaderboardListProps) {
   const [status, setStatus] = useState<Status>('loading');
   const [entries, setEntries] = useState<ScoreEntry[]>([]);
+  const s = useStrings();
 
   useEffect(() => {
     let cancelled = false;
@@ -38,10 +41,10 @@ export default function LeaderboardList({
     };
   }, [limit, refreshKey]);
 
-  if (status === 'loading') return <p className={styles.note}>불러오는 중…</p>;
-  if (status === 'unavailable') return <p className={styles.note}>리더보드 준비 중</p>;
-  if (status === 'error') return <p className={styles.note}>리더보드를 불러오지 못했어요.</p>;
-  if (entries.length === 0) return <p className={styles.note}>아직 등록된 기록이 없어요. 1등이 되어보세요!</p>;
+  if (status === 'loading') return <p className={styles.note}>{s.loading}</p>;
+  if (status === 'unavailable') return <p className={styles.note}>{s.leaderboardPending}</p>;
+  if (status === 'error') return <p className={styles.note}>{s.leaderboardError}</p>;
+  if (entries.length === 0) return <p className={styles.note}>{s.leaderboardEmpty}</p>;
 
   return (
     <ol className={styles.list} data-testid="leaderboard-list">
@@ -53,7 +56,7 @@ export default function LeaderboardList({
         >
           <span className={styles.rank}>{index + 1}</span>
           <span className={styles.nickname}>{entry.nickname}</span>
-          <span className={styles.value}>{entry.score.toLocaleString('ko-KR')}</span>
+          <span className={styles.value}>{formatNumber(entry.score)}</span>
         </li>
       ))}
     </ol>

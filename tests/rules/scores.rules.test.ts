@@ -54,6 +54,13 @@ describe('scores rules', () => {
     await assertSucceeds(setDoc(doc(db, 'scores/a'), validEntry('uid-1')));
   });
 
+  it('accepts a Chinese (CJK) nickname', async () => {
+    const db = testEnv.authenticatedContext('uid-1').firestore();
+    await assertSucceeds(
+      setDoc(doc(db, 'scores/cjk'), { ...validEntry('uid-1'), nickname: '正义制裁' }),
+    );
+  });
+
   it('rejects a create whose uid does not match the caller', async () => {
     const db = testEnv.authenticatedContext('uid-1').firestore();
     await assertFails(setDoc(doc(db, 'scores/a'), validEntry('uid-2')));

@@ -3,8 +3,8 @@ import { checkNickname, NICKNAME_PATTERN } from '@/lib/nickname';
 import { shareText } from '@/lib/share';
 
 describe('checkNickname', () => {
-  it('accepts Korean, alphanumeric and mixed nicknames of 2–12 chars', () => {
-    for (const name of ['응징자', 'abc', 'A1', '정의구현123', 'zzzzzzzzzzzz']) {
+  it('accepts Korean, CJK, alphanumeric and mixed nicknames of 2–12 chars', () => {
+    for (const name of ['응징자', 'abc', 'A1', '정의구현123', 'zzzzzzzzzzzz', '正义制裁', '玩家01']) {
       expect(checkNickname(name).ok, name).toBe(true);
     }
   });
@@ -25,12 +25,17 @@ describe('checkNickname', () => {
     expect(checkNickname('FuCk').ok).toBe(false);
   });
 
+  it('returns a localizable reason code rather than a message', () => {
+    expect(checkNickname('a')).toEqual({ ok: false, reason: 'format' });
+    expect(checkNickname('FuCk')).toEqual({ ok: false, reason: 'banned' });
+  });
+
   it('trims surrounding whitespace before validating', () => {
     expect(checkNickname('  응징자  ').ok).toBe(true);
   });
 
   it('keeps the pattern anchored so it matches the Firestore rule', () => {
-    expect(NICKNAME_PATTERN.source).toBe('^[가-힣a-zA-Z0-9]{2,12}$');
+    expect(NICKNAME_PATTERN.source).toBe('^[가-힣a-zA-Z0-9一-龥]{2,12}$');
   });
 });
 

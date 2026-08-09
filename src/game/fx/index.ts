@@ -8,6 +8,7 @@ import { ComicTextSystem } from './comic';
 import { ParticleSystem } from './particles';
 import { ScreenShake } from './shake';
 import { TUNING } from '../tuning';
+import { getStrings } from '../../lib/i18n';
 
 const PERFECT_COLORS = ['#ffd93d', '#ffffff', '#ff9f1c'] as const;
 const GOOD_COLORS = ['#7ee787', '#ffffff', '#3fb950'] as const;
@@ -66,13 +67,14 @@ export class Fx {
       spread: 1.1,
     });
     this.shake.kick(perfect ? 20 : 12);
-    this.comic.pop(perfect ? '퍼펙트!' : 'POW!', x, y - 40, {
+    const s = getStrings();
+    this.comic.pop(perfect ? s.fxPerfect : s.fxPow, x, y - 40, {
       size: perfect ? 56 : 46,
       color: perfect ? '#ffd93d' : '#7ee787',
       burst: true,
       life: 800,
     });
-    // NB: the big centred "정의구현!" is the result banner in render.ts — the comic
+    // NB: the big centred justice banner is drawn by render.ts — the comic
     // pop stays short so the two never read as duplicated text.
   }
 
@@ -90,7 +92,7 @@ export class Fx {
       shape: 'square',
     });
     this.shake.kick(16);
-    this.comic.pop('으악!', x, y - 40, { size: 46, color: '#ff6b6b', life: 700 });
+    this.comic.pop(getStrings().fxWhiff, x, y - 40, { size: 46, color: '#ff6b6b', life: 700 });
   }
 
   /**
@@ -110,11 +112,11 @@ export class Fx {
       gravity: 800,
     });
     this.shake.kick(TUNING.HIT_SHAKE);
-    this.comic.pop('아야!', x, y - 34, { size: 48, color: '#ff6b6b', life: 620, burst: true });
+    this.comic.pop(getStrings().fxOuch, x, y - 34, { size: 48, color: '#ff6b6b', life: 620, burst: true });
   }
 
   comboUp(combo: number, x: number, y: number): void {
-    this.comic.pop(`${combo} COMBO`, x, y, { size: 34, color: '#8ab4ff', life: 620 });
+    this.comic.pop(`${combo} ${getStrings().fxCombo}`, x, y, { size: 34, color: '#8ab4ff', life: 620 });
   }
 
   gameOver(x: number, y: number): void {

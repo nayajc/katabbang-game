@@ -5,7 +5,8 @@ test('title -> start -> canvas is playable', async ({ page }) => {
 
   const title = page.getByTestId('title-screen');
   await expect(title).toBeVisible();
-  await expect(page.getByRole('heading', { name: '어깨빵 응징 러너' })).toBeVisible();
+  // Title text is locale-dependent (see i18n.spec.ts) — assert the element, not the copy.
+  await expect(page.getByTestId('title-heading')).toBeVisible();
 
   const canvas = page.getByTestId('game-canvas');
   await expect(canvas).toBeVisible();

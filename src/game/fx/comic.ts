@@ -1,5 +1,5 @@
 /**
- * Comic-book effect text ("POW!", "정의구현!", "퍼펙트!") — pooled, capped, drawn
+ * Comic-book effect text ("POW!", "PERFECT!", …) — pooled, capped, drawn
  * with a rotated outline + starburst so it reads as a manhwa impact caption.
  */
 

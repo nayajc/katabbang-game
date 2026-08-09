@@ -78,3 +78,35 @@
   font-weight: 700;
   text-decoration: none;
 }
+
+.head {
+  display: grid;
+  grid-template-columns: 40px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 0 12px 8px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #7c8397;
+}
+
+.head .rank,
+.head .nickname,
+.head .value {
+  color: #7c8397;
+  font-weight: 700;
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.footer .back {
+  margin-top: 0;
+}

@@ -1,6 +1,8 @@
+import { getStrings } from './i18n';
+
 /** Web Share API with a clipboard fallback. v1 shares a link only — no image card. */
 export function shareText(score: number, url: string): string {
-  return `어깨빵 응징 러너에서 ${score}점! 정의구현 하러 가기 → ${url}`;
+  return getStrings().shareText(score, url);
 }
 
 export type ShareOutcome = 'shared' | 'copied' | 'cancelled' | 'failed';
@@ -12,7 +14,7 @@ export async function shareScore(score: number, url?: string): Promise<ShareOutc
 
   if (typeof navigator !== 'undefined' && navigator.share) {
     try {
-      await navigator.share({ title: '어깨빵 응징 러너', text, url: target });
+      await navigator.share({ title: getStrings().title, text, url: target });
       return 'shared';
     } catch (error) {
       // A user-dismissed share sheet is not a failure worth falling back on.

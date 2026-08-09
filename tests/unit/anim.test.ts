@@ -78,12 +78,3 @@ describe('anim', () => {
     expect(full.scaleY).toBeLessThan(1);
   });
 });
-
-describe('run-cycle frames', () => {
-  it('returns null until every cycle frame has decoded', async () => {
-    const { playerRunFrame, _resetSprites } = await import('../../src/game/sprites');
-    _resetSprites();
-    expect(playerRunFrame(0)).toBeNull();
-    expect(playerRunFrame(500)).toBeNull();
-  });
-});

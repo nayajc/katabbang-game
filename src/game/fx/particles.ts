@@ -12,6 +12,13 @@ export type Particle = {
   y: number;
   vx: number;
   vy: number;
+  /**
+   * Virtual-space `y` the burst was spawned at. The 3D presentation reads the
+   * particle's own `y` as HEIGHT (it falls under gravity) and this origin as
+   * DEPTH, so a burst stays in one vertical plane at the impact's z instead of
+   * flying into the distance.
+   */
+  originY: number;
   /** Remaining life in ms. */
   life: number;
   maxLife: number;
@@ -31,6 +38,7 @@ function blank(): Particle {
     y: 0,
     vx: 0,
     vy: 0,
+    originY: 0,
     life: 0,
     maxLife: 1,
     size: 1,
@@ -82,6 +90,7 @@ export class ParticleSystem {
       const speed = o.speed + (o.speedJitter ?? 0) * (Math.random() - 0.5) * 2;
       p.x = x;
       p.y = y;
+      p.originY = y;
       p.vx = Math.cos(a) * speed;
       p.vy = Math.sin(a) * speed;
       p.maxLife = Math.max(1, o.life + (o.lifeJitter ?? 0) * (Math.random() - 0.5) * 2);
@@ -113,26 +122,9 @@ export class ParticleSystem {
     }
   }
 
-  draw(ctx: CanvasRenderingContext2D): void {
-    for (const p of this.pool) {
-      if (!p.alive) continue;
-      const k = p.life / p.maxLife;
-      ctx.globalAlpha = k;
-      ctx.fillStyle = p.color;
-      if (p.shape === 'square') {
-        ctx.save();
-        ctx.translate(p.x, p.y);
-        ctx.rotate(p.rot);
-        const s = p.size * k;
-        ctx.fillRect(-s, -s, s * 2, s * 2);
-        ctx.restore();
-      } else {
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, Math.max(0.5, p.size * k), 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
-    ctx.globalAlpha = 1;
+  /** Visits every live particle. Renderer-agnostic: the draw path lives outside. */
+  forEach(fn: (p: Readonly<Particle>) => void): void {
+    for (const p of this.pool) if (p.alive) fn(p);
   }
 
   private take(): Particle {

@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import { ComicTextSystem, MAX_COMIC } from '@/game/fx/comic';
 import { MAX_PARTICLES, ParticleSystem } from '@/game/fx/particles';
 import { ScreenShake } from '@/game/fx/shake';
-import { pedestrianSprite } from '@/game/sprites';
 
 describe('ParticleSystem', () => {
   it('never exceeds the hard cap, even under repeated oversized bursts', () => {
@@ -61,13 +60,5 @@ describe('ComicTextSystem', () => {
     for (let i = 0; i < MAX_COMIC * 3; i += 1) c.pop(`${i}`, 0, 0);
     const alive = (c as unknown as { pool: { alive: boolean }[] }).pool.filter((p) => p.alive);
     expect(alive).toHaveLength(MAX_COMIC);
-  });
-});
-
-describe('pedestrianSprite', () => {
-  it('is deterministic per entity id and stays within the variant set', () => {
-    expect(pedestrianSprite(7)).toBe(pedestrianSprite(7));
-    expect(pedestrianSprite(1)).toBe('pedestrian_2');
-    expect(pedestrianSprite(3)).toBe('pedestrian_1');
   });
 });

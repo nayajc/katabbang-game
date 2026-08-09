@@ -21,9 +21,65 @@
   -webkit-user-select: none;
 }
 
+/* --- On-screen controls (were drawn inside the canvas before the 3D swap) --- */
+
+.laneButton,
+.muteButton {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.72);
+  font-weight: 800;
+  cursor: pointer;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  backdrop-filter: blur(2px);
+}
+
+.laneButton {
+  /* Thumb zone: lifted well off the bottom edge so neither the iOS home
+     indicator nor a collapsing browser toolbar can sit on top of them. */
+  bottom: calc(13% + env(safe-area-inset-bottom));
+  z-index: 3;
+  width: 92px;
+  height: 92px;
+  font-size: 34px;
+}
+
+.laneButton:active {
+  background: rgba(255, 255, 255, 0.28);
+  color: #fff;
+}
+
+.laneLeft {
+  left: 18px;
+}
+
+.laneRight {
+  right: 18px;
+}
+
+.muteButton {
+  /* Below the HP hearts, which the HUD pins to the same corner. */
+  top: calc(58px + env(safe-area-inset-top));
+  right: 20px;
+  z-index: 4;
+  width: 52px;
+  height: 52px;
+  font-size: 22px;
+}
+
 .overlay {
   position: absolute;
   inset: 0;
+  z-index: 3;
   display: flex;
   flex-direction: column;
   align-items: center;

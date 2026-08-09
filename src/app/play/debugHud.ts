@@ -6,7 +6,7 @@
  * cannot preventDefault or reorder anything), and the DOM node is
  * `pointer-events: none`.
  */
-import { screenToVirtual } from '@/game/render';
+import { screenToVirtual } from '@/game/viewport';
 
 type Counters = Record<string, number>;
 

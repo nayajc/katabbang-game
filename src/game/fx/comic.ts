@@ -10,6 +10,8 @@ export type ComicPop = {
   text: string;
   x: number;
   y: number;
+  /** Virtual `y` at pop time. Same role as `Particle.originY`: it fixes depth. */
+  originY: number;
   life: number;
   maxLife: number;
   size: number;
@@ -24,6 +26,7 @@ function blank(): ComicPop {
     text: '',
     x: 0,
     y: 0,
+    originY: 0,
     life: 0,
     maxLife: 1,
     size: 40,
@@ -58,6 +61,7 @@ export class ComicTextSystem {
     p.text = text;
     p.x = x;
     p.y = y;
+    p.originY = y;
     p.maxLife = o.life ?? 700;
     p.life = p.maxLife;
     p.size = o.size ?? 44;
@@ -75,46 +79,19 @@ export class ComicTextSystem {
     }
   }
 
-  draw(ctx: CanvasRenderingContext2D): void {
-    for (const p of this.pool) {
-      if (!p.alive) continue;
-      const k = p.life / p.maxLife;
-      // Overshoot pop-in over the first 20% of life, then hold and fade.
-      const t = 1 - k;
-      const scale = t < 0.2 ? 0.4 + (t / 0.2) * 0.75 : 1.15 - (t - 0.2) * 0.18;
-      ctx.save();
-      ctx.globalAlpha = Math.min(1, k * 2.5);
-      ctx.translate(p.x, p.y);
-      ctx.rotate(p.rot);
-      ctx.scale(scale, scale);
-      if (p.burst) drawStarburst(ctx, p.size * 2.1);
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.font = `900 ${p.size}px system-ui, sans-serif`;
-      ctx.lineJoin = 'round';
-      ctx.lineWidth = p.size * 0.22;
-      ctx.strokeStyle = '#12101c';
-      ctx.strokeText(p.text, 0, 0);
-      ctx.fillStyle = p.color;
-      ctx.fillText(p.text, 0, 0);
-      ctx.restore();
+  /** Visits every live pop, newest slot last. The renderer owns the drawing. */
+  forEach(fn: (p: Readonly<ComicPop>, slot: number) => void): void {
+    for (let i = 0; i < this.pool.length; i += 1) {
+      if (this.pool[i].alive) fn(this.pool[i], i);
     }
-    ctx.globalAlpha = 1;
   }
 }
 
-function drawStarburst(ctx: CanvasRenderingContext2D, radius: number) {
-  const spikes = 12;
-  ctx.beginPath();
-  for (let i = 0; i < spikes * 2; i += 1) {
-    const r = i % 2 === 0 ? radius : radius * 0.62;
-    const a = (i / (spikes * 2)) * Math.PI * 2;
-    const x = Math.cos(a) * r;
-    const y = Math.sin(a) * r * 0.62;
-    if (i === 0) ctx.moveTo(x, y);
-    else ctx.lineTo(x, y);
-  }
-  ctx.closePath();
-  ctx.fillStyle = '#ffffff22';
-  ctx.fill();
+/**
+ * Overshoot pop-in over the first 20% of life, then a slow settle. Shared by
+ * every renderer so the caption timing is a property of the FX, not the draw.
+ */
+export function comicScale(p: Pick<ComicPop, 'life' | 'maxLife'>): number {
+  const t = 1 - p.life / p.maxLife;
+  return t < 0.2 ? 0.4 + (t / 0.2) * 0.75 : 1.15 - (t - 0.2) * 0.18;
 }

@@ -3,8 +3,10 @@
 import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Game, type GameOverInfo } from '@/game/game';
+import { audio } from '@/game/audio';
+import { notePointerDown, pointerEventsWorking } from '@/game/pointer-health';
 import type { Phase } from '@/game/state';
-import { TUNING } from '@/game/tuning';
+import { ThreeRenderer } from '@/game3d/renderer';
 import LocaleToggle from '@/app/LocaleToggle';
 import { useStrings } from '@/lib/useLocale';
 import styles from './play.module.css';
@@ -26,34 +28,33 @@ export type GameCanvasProps = {
 
 export default function GameCanvas({ onGameOver }: GameCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
   const gameRef = useRef<Game | null>(null);
   const onGameOverRef = useRef(onGameOver);
   useEffect(() => {
     onGameOverRef.current = onGameOver;
   }, [onGameOver]);
 
-  // Phase drives only the React overlays (title / game over) — never per-frame HUD.
+  // Phase drives only the React overlays (title / game over / controls) —
+  // never the per-frame HUD, which the renderer writes imperatively.
   const [phase, setPhase] = useState<Phase>('title');
+  const [muted, setMuted] = useState(false);
   const [result, setResult] = useState<GameOverInfo | null>(null);
   const s = useStrings();
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    const stage = stageRef.current;
+    if (!canvas || !stage) return;
 
-    const resize = () => {
-      const dpr = Math.min(TUNING.MAX_DPR, window.devicePixelRatio || 1);
-      const rect = canvas.getBoundingClientRect();
-      const w = Math.max(1, Math.round(rect.width * dpr));
-      const h = Math.max(1, Math.round(rect.height * dpr));
-      if (canvas.width === w && canvas.height === h) return;
-      canvas.width = w;
-      canvas.height = h;
-    };
-    resize();
+    const renderer = new ThreeRenderer(canvas, {
+      debug: new URLSearchParams(window.location.search).get('debug') === '1',
+      hudRoot: stage,
+    });
 
     const game = new Game({
       canvas,
+      renderer,
       debug: new URLSearchParams(window.location.search).get('debug') === '1',
       onPhase: setPhase,
       onGameOver: (info) => {
@@ -64,18 +65,14 @@ export default function GameCanvas({ onGameOver }: GameCanvasProps) {
     gameRef.current = game;
     game.start();
 
-    // The backing store MUST track the CSS box: render() derives the letterbox
-    // from canvas.width/height while screenToVirtual() derives it from the
-    // bounding rect, so any aspect drift moves the drawn buttons away from their
-    // hit boxes. On iOS the 100dvh box changes as the browser chrome collapses
-    // without a reliable window 'resize', hence the observer.
+    // The drawing buffer MUST track the CSS box or the perspective stretches.
+    // On iOS the 100dvh box changes as the browser chrome collapses without a
+    // reliable window 'resize', hence the observer + visualViewport listeners.
+    const resize = () => renderer.resize();
     const ro = new ResizeObserver(resize);
     ro.observe(canvas);
-
     window.addEventListener('resize', resize);
     window.addEventListener('orientationchange', resize);
-    // iOS collapses/expands its toolbars without always firing a window resize
-    // or an observable CSS box change; visualViewport is the reliable signal.
     const vv = window.visualViewport;
     vv?.addEventListener('resize', resize);
     vv?.addEventListener('scroll', resize);
@@ -85,6 +82,7 @@ export default function GameCanvas({ onGameOver }: GameCanvasProps) {
       window.removeEventListener('orientationchange', resize);
       vv?.removeEventListener('resize', resize);
       vv?.removeEventListener('scroll', resize);
+      // Game.destroy() also disposes the renderer it was given.
       game.destroy();
       gameRef.current = null;
     };
@@ -113,9 +111,94 @@ export default function GameCanvas({ onGameOver }: GameCanvasProps) {
     gameRef.current?.startRun();
   }, []);
 
+  /**
+   * The lane and mute controls are real DOM buttons layered over the canvas, so
+   * their press never reaches the canvas input listeners — a lane tap can never
+   * be read as a counter tap.
+   *
+   * They act on `pointerdown` (press time, like every other input in the game)
+   * and fall back to `click` only on browsers that never deliver pointer
+   * events, which is the same latch `input.ts` uses for its touch fallback.
+   */
+  const laneOf = (el: HTMLElement): -1 | 1 => (el.dataset.dir === '1' ? 1 : -1);
+
+  const onLanePointerDown = useCallback((e: React.PointerEvent<HTMLButtonElement>) => {
+    notePointerDown(e.timeStamp);
+    e.preventDefault();
+    gameRef.current?.laneTap(laneOf(e.currentTarget));
+  }, []);
+
+  const onLaneClick = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+    if (pointerEventsWorking(e.timeStamp)) return;
+    gameRef.current?.laneTap(laneOf(e.currentTarget));
+  }, []);
+
+  const toggleMute = useCallback(() => {
+    audio.toggleMute();
+    setMuted(audio.muted);
+  }, []);
+
+  const onMutePointerDown = useCallback(
+    (e: React.PointerEvent<HTMLButtonElement>) => {
+      notePointerDown(e.timeStamp);
+      e.preventDefault();
+      toggleMute();
+    },
+    [toggleMute],
+  );
+
+  const onMuteClick = useCallback(
+    (e: React.MouseEvent<HTMLButtonElement>) => {
+      if (pointerEventsWorking(e.timeStamp)) return;
+      toggleMute();
+    },
+    [toggleMute],
+  );
+
+  const controlsVisible = phase === 'running' || phase === 'slowmo' || phase === 'result';
+
   return (
-    <div className={styles.stage} data-phase={phase}>
+    <div className={styles.stage} data-phase={phase} ref={stageRef}>
       <canvas ref={canvasRef} className={styles.canvas} data-testid="game-canvas" />
+
+      <button
+        type="button"
+        className={styles.muteButton}
+        aria-label={s.muteHint}
+        data-testid="mute-button"
+        data-muted={muted ? '1' : '0'}
+        onPointerDown={onMutePointerDown}
+        onClick={onMuteClick}
+      >
+        {muted ? '🔇' : '🔊'}
+      </button>
+
+      {controlsVisible && (
+        <>
+          <button
+            type="button"
+            className={`${styles.laneButton} ${styles.laneLeft}`}
+            aria-label="lane left"
+            data-testid="lane-left"
+            data-dir="-1"
+            onPointerDown={onLanePointerDown}
+            onClick={onLaneClick}
+          >
+            ◀
+          </button>
+          <button
+            type="button"
+            className={`${styles.laneButton} ${styles.laneRight}`}
+            aria-label="lane right"
+            data-testid="lane-right"
+            data-dir="1"
+            onPointerDown={onLanePointerDown}
+            onClick={onLaneClick}
+          >
+            ▶
+          </button>
+        </>
+      )}
 
       {phase === 'title' && (
         <div className={styles.overlay} data-testid="title-screen">

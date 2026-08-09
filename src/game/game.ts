@@ -7,16 +7,21 @@ import { collides, Spawner, type Entity } from './entities/spawner';
 import { Fx } from './fx';
 import { attachInput } from './input';
 import type { Grade } from './judge';
-import { notePointerDown, pointerEventsWorking } from './pointer-health';
 import { createRng } from './rng';
-import { hitsLaneButton, hitsMuteButton, render, screenToVirtual } from './render';
-import { loadSprites } from './sprites';
 import { addDistance, applyCounter, applyHit, createScore, total, type Score } from './scoring';
 import { StateMachine, type Phase } from './state';
 import { TUNING } from './tuning';
 
-/** Wall-clock duration of the lane button pressed highlight. */
-const LANE_PRESS_MS = 130;
+/**
+ * Presentation port. `Game` owns simulation only; everything visual is behind
+ * this interface, so the renderer can be swapped (2D canvas -> Three.js) with
+ * no gameplay change. `render` is called once per animation frame with the
+ * frame's {@link GameView}.
+ */
+export interface GameRenderer {
+  render(view: GameView): void;
+  dispose(): void;
+}
 
 export type GameOverInfo = {
   score: number;
@@ -28,6 +33,8 @@ export type GameOverInfo = {
 
 export type GameOptions = {
   canvas: HTMLCanvasElement;
+  /** Presentation. Omitted in headless tests, where nothing is drawn. */
+  renderer?: GameRenderer;
   seed?: number;
   /** ?debug=1 only: mirror per-frame counter timing onto the stage dataset. */
   debug?: boolean;
@@ -52,10 +59,6 @@ export type GameView = {
   counterLeadMs: number;
   /** Particles / shake / comic text, already advanced for this frame. */
   fx: Fx;
-  /** Drives the on-canvas mute button glyph. */
-  muted: boolean;
-  /** Lane button showing its pressed highlight this frame, if any. */
-  lanePressed: -1 | 1 | null;
   /** 1 -> 0 over HIT_FLASH_MS after an hp loss; drives the red flash + hp flash. */
   hitFlash: number;
   /** Sprite alpha for the i-frame blink (1 when not invulnerable). */
@@ -64,7 +67,7 @@ export type GameView = {
 
 export class Game {
   private canvas: HTMLCanvasElement;
-  private ctx: CanvasRenderingContext2D;
+  private renderer: GameRenderer | null;
   private engine: Engine;
   private sm: StateMachine;
   private player = new Player();
@@ -80,13 +83,11 @@ export class Game {
   private resultStart = 0;
   private hitstopUntil = 0;
   private detachInput: () => void;
-  private detachButtons: () => void;
+  private detachUnlock: () => void;
   private onGameOver?: (info: GameOverInfo) => void;
   private fx = new Fx();
   private lastFxTs = 0;
   private debug: boolean;
-  private lanePressDir: -1 | 1 | null = null;
-  private lanePressUntil = 0;
   /** Wall-clock end of the post-hit invulnerability window. */
   private invulnUntil = 0;
   /** Wall-clock start of the red hit flash. */
@@ -94,9 +95,7 @@ export class Game {
 
   constructor(opts: GameOptions) {
     this.canvas = opts.canvas;
-    const ctx = opts.canvas.getContext('2d');
-    if (!ctx) throw new Error('2D context unavailable');
-    this.ctx = ctx;
+    this.renderer = opts.renderer ?? null;
     this.debug = opts.debug ?? false;
     this.seed = opts.seed ?? (Date.now() & 0xffffffff) >>> 0;
     this.spawner = new Spawner(createRng(this.seed));
@@ -107,51 +106,7 @@ export class Game {
       render: (ts) => this.draw(ts),
       timescale: () => this.timescale(),
     });
-    loadSprites();
-    const detachUnlock = audio.unlockOnGesture();
-
-    // Registered BEFORE attachInput so a tap on the mute or lane buttons can
-    // swallow the event (same-target listeners fire in registration order).
-    /** @returns true when the press landed on a canvas button and was consumed. */
-    const tryButtonTap = (clientX: number, clientY: number): boolean => {
-      const { x, y } = screenToVirtual(this.canvas, clientX, clientY);
-      if (hitsMuteButton(x, y)) {
-        audio.toggleMute();
-        return true;
-      }
-      if (!this.sm.is('running', 'slowmo')) return false;
-      const dir = hitsLaneButton(x, y);
-      if (dir === null) return false;
-      this.lanePressDir = dir;
-      this.lanePressUntil = now() + LANE_PRESS_MS;
-      this.onLane(dir);
-      return true;
-    };
-
-    const onButtonTap = (e: PointerEvent) => {
-      notePointerDown(e.timeStamp);
-      if (!tryButtonTap(e.clientX, e.clientY)) return;
-      e.preventDefault();
-      e.stopImmediatePropagation();
-    };
-    // Touch fallback for browsers that never deliver pointerdown. Registered
-    // before attachInput's own touch listeners so it can swallow the gesture.
-    const onButtonTouch = (e: TouchEvent) => {
-      if (pointerEventsWorking(e.timeStamp)) return;
-      const t = e.changedTouches[0];
-      if (!t) return;
-      if (!tryButtonTap(t.clientX, t.clientY)) return;
-      e.preventDefault();
-      e.stopImmediatePropagation();
-    };
-    this.canvas.addEventListener('pointerdown', onButtonTap, { passive: false });
-    this.canvas.addEventListener('touchstart', onButtonTouch as EventListener, { passive: false });
-    this.detachButtons = () => {
-      this.canvas.removeEventListener('pointerdown', onButtonTap);
-      this.canvas.removeEventListener('touchstart', onButtonTouch as EventListener);
-      detachUnlock();
-    };
-
+    this.detachUnlock = audio.unlockOnGesture();
     this.detachInput = attachInput(this.canvas, {
       onLane: (dir) => this.onLane(dir),
       onCounter: (ts) => this.onCounter(ts),
@@ -169,7 +124,21 @@ export class Game {
   destroy(): void {
     this.engine.stop();
     this.detachInput();
-    this.detachButtons();
+    this.detachUnlock();
+    this.renderer?.dispose();
+    this.renderer = null;
+  }
+
+  /**
+   * Lane command from a DOM control (the ◀ / ▶ thumb buttons).
+   *
+   * Those buttons are real elements layered over the canvas, so their press
+   * never reaches the canvas listeners — a lane tap can therefore never be
+   * mistaken for a counter tap, which is the guarantee the old canvas-space
+   * hit test had to enforce by swallowing the event.
+   */
+  laneTap(dir: -1 | 1): void {
+    this.onLane(dir);
   }
 
   /** title/gameover -> running. Also used by the "다시 하기" button. */
@@ -263,7 +232,12 @@ export class Game {
         target.dead = true;
       } else {
         // Knockback parabola + rotation; integrated in `update`, drawn by render.ts.
-        target.knockback = { vx: (target.x < this.player.x ? -1 : 1) * 900, vy: -1100, rot: 0 };
+        target.knockback = {
+          vx: (target.x < this.player.x ? -1 : 1) * 900,
+          vy: -1100,
+          rot: 0,
+          y0: target.y,
+        };
       }
     }
     if (grade === 'miss') {
@@ -405,8 +379,6 @@ export class Game {
         : 0,
       counterLeadMs: this.counter.active ? this.counter.windowCenterTs - wallTs : 0,
       fx: this.fx,
-      muted: audio.muted,
-      lanePressed: wallTs < this.lanePressUntil ? this.lanePressDir : null,
       hitFlash: Math.max(0, 1 - (wallTs - this.hitFlashStart) / TUNING.HIT_FLASH_MS),
       playerAlpha:
         wallTs < this.invulnUntil
@@ -424,6 +396,6 @@ export class Game {
         : '-';
     }
 
-    render(this.ctx, this.canvas, view);
+    this.renderer?.render(view);
   }
 }

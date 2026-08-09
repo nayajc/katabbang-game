@@ -13,8 +13,13 @@ export type Entity = {
   dead: boolean;
   /** Bumper only: became the active counter target. */
   engaged: boolean;
-  /** Knockback animation state (set by the FX layer / counter result). */
-  knockback: { vx: number; vy: number; rot: number } | null;
+  /**
+   * Knockback animation state (set by the FX layer / counter result).
+   * `y0` is the virtual `y` the launch started from: the 3D presentation reads
+   * the live `y` as HEIGHT and `y0` as DEPTH, so the body arcs up and away from
+   * the camera instead of receding down the road.
+   */
+  knockback: { vx: number; vy: number; rot: number; y0: number } | null;
 };
 
 const lerp = (a: number, b: number, k: number) => a + (b - a) * k;

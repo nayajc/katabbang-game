@@ -17,7 +17,9 @@ import { TUNING } from '@/game/tuning';
 const WANTED = 3;
 
 test('tapping when the counter cue closes grades at least good', async ({ page }) => {
-  test.setTimeout(180_000);
+  // Each encounter costs ~10-60s of idle-run retries (spawn RNG), so three of
+  // them need a generous budget.
+  test.setTimeout(320_000);
   await page.goto('/play?debug=1');
   await page.getByTestId('start-button').click();
 
@@ -46,7 +48,7 @@ test('tapping when the counter cue closes grades at least good', async ({ page }
 
     await new Promise<void>((resolve) => {
       const tick = () => {
-        if (out.length >= wanted || performance.now() - started > 150_000) return resolve();
+        if (out.length >= wanted || performance.now() - started > 260_000) return resolve();
         const phase = el.dataset.phase;
 
         // The judgement lands a frame after the tap.

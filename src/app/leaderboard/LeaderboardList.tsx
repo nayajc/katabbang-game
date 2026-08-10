@@ -2,9 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { fetchTopScores, LEADERBOARD_LIMIT, type ScoreEntry } from '@/lib/leaderboard';
-import { formatNumber } from '@/lib/i18n';
 import { useStrings } from '@/lib/useLocale';
-import styles from './leaderboard.module.css';
+import { LeaderboardCard, LeaderboardRow } from './LeaderboardCard';
 
 export type LeaderboardListProps = {
   /** Document id of the entry just written by this player — gets rank highlighting. */
@@ -41,24 +40,23 @@ export default function LeaderboardList({
     };
   }, [limit, refreshKey]);
 
-  if (status === 'loading') return <p className={styles.note}>{s.loading}</p>;
-  if (status === 'unavailable') return <p className={styles.note}>{s.leaderboardPending}</p>;
-  if (status === 'error') return <p className={styles.note}>{s.leaderboardError}</p>;
-  if (entries.length === 0) return <p className={styles.note}>{s.leaderboardEmpty}</p>;
+  if (status === 'loading') return <LeaderboardCard note={s.loading} />;
+  if (status === 'unavailable') return <LeaderboardCard note={s.leaderboardPending} />;
+  if (status === 'error') return <LeaderboardCard note={s.leaderboardError} />;
+  if (entries.length === 0) return <LeaderboardCard note={s.leaderboardEmpty} />;
 
   return (
-    <ol className={styles.list} data-testid="leaderboard-list">
+    <LeaderboardCard>
       {entries.map((entry, index) => (
-        <li
+        <LeaderboardRow
           key={entry.id}
-          className={entry.id === highlightId ? `${styles.row} ${styles.mine}` : styles.row}
-          data-testid={entry.id === highlightId ? 'leaderboard-row-mine' : 'leaderboard-row'}
-        >
-          <span className={styles.rank}>{index + 1}</span>
-          <span className={styles.nickname}>{entry.nickname}</span>
-          <span className={styles.value}>{formatNumber(entry.score)}</span>
-        </li>
+          rank={index + 1}
+          nickname={entry.nickname}
+          score={entry.score}
+          variant={entry.id === highlightId ? 'mine' : 'default'}
+          testId={entry.id === highlightId ? 'leaderboard-row-mine' : 'leaderboard-row'}
+        />
       ))}
-    </ol>
+    </LeaderboardCard>
   );
 }

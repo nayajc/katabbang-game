@@ -138,34 +138,12 @@
   width: min(420px, 100%);
 }
 
-.best {
-  margin: 0;
-  font-size: 15px;
-  font-weight: 700;
-  color: #aab;
-}
-
 .formRow {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   width: 100%;
-}
-
-.input {
-  flex: 1 1 auto;
-  min-width: 0;
-  padding: 11px 14px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
-  color: #fff;
-  font-size: 15px;
-}
-
-.input::placeholder {
-  color: #7c8397;
 }
 
 .smallButton {
@@ -193,12 +171,4 @@
   font-size: 15px;
   font-weight: 700;
   text-decoration: none;
-}
-
-.board {
-  width: 100%;
-  max-height: 34dvh;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  touch-action: pan-y;
 }

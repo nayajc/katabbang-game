@@ -13,11 +13,6 @@ export default function LeaderboardScreen() {
     <div className={styles.inner}>
       <h1 className={styles.heading}>{s.leaderboardHeading}</h1>
       <p className={styles.sub}>{s.leaderboardSub}</p>
-      <div className={styles.head} aria-hidden="true">
-        <span className={styles.rank}>{s.colRank}</span>
-        <span className={styles.nickname}>{s.colName}</span>
-        <span className={styles.value}>{s.colScore}</span>
-      </div>
       <LeaderboardList />
       <div className={styles.footer}>
         <Link href="/" className={styles.back}>

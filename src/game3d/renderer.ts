@@ -8,7 +8,7 @@ import { CharacterPool, pedestrianVariant, type ActorKind } from './characters';
 import { toWorldHeight, toWorldX, toWorldZ, WORLD_PER_VU } from './coords';
 import { ComicView, CounterRingView, ImpactView, ParticleView } from './effects';
 import { DomHud } from './hud';
-import { UPPERCUT_MS } from './humanoid';
+import { UPPERCUT_MS } from './rig';
 import { FOG_COLOR, World } from './world';
 
 /**
@@ -111,7 +111,7 @@ export class ThreeRenderer implements GameRenderer {
     this.world = new World(this.scene);
     this.characters = new CharacterPool(this.scene);
     // The player is seen from behind: rotate it to face down the road.
-    this.characters.player.humanoid.root.rotation.y = Math.PI;
+    this.characters.player.setSpin(Math.PI);
     this.particles = new ParticleView(this.scene);
     this.comic = new ComicView(this.scene);
     this.ring = new CounterRingView(this.scene);
@@ -212,23 +212,23 @@ export class ThreeRenderer implements GameRenderer {
     const countering =
       view.phase === 'slowmo' || (view.phase === 'result' && view.lastGrade !== null);
 
-    actor.humanoid.root.position.set(toWorldX(p.x), 0, 0);
+    actor.rig.root.position.set(toWorldX(p.x), 0, 0);
     if (uppercut >= 0 && uppercut < 1) {
       // 승룡권. Owns the whole rig for its 520ms, gait included.
-      actor.humanoid.uppercut(uppercut, -1);
+      actor.rig.uppercut(uppercut, -1);
     } else if (view.whiffProgress >= 0 && view.whiffProgress < 1) {
       // Whiffed swing: the input was pressed with no window armed. Ranked below
       // the uppercut so a press during the result phase can never cut the
       // 승룡권 short, and above the run cycle so the jab is actually visible.
-      actor.humanoid.jab(view.whiffProgress, -1);
+      actor.rig.jab(view.whiffProgress, -1);
     } else if (countering) {
-      actor.humanoid.plant(0.28);
-      actor.humanoid.applyPose(playerCounterPose(POSE, view.fx.slowmo), p.lean, -1);
+      actor.rig.plant(0.28);
+      actor.rig.applyPose(playerCounterPose(POSE, view.fx.slowmo), p.lean, -1);
     } else {
-      actor.humanoid.stride(view.scrollY, 0);
-      actor.humanoid.applyPose(playerRunPose(POSE, view.scrollY, view.speed), p.lean, -1);
+      actor.rig.stride(view.scrollY, 0);
+      actor.rig.applyPose(playerRunPose(POSE, view.scrollY, view.speed), p.lean, -1);
     }
-    actor.humanoid.setOpacity(view.playerAlpha);
+    actor.rig.setOpacity(view.playerAlpha);
     actor.shadow.position.set(toWorldX(p.x), 0.015, 0);
   }
 
@@ -242,7 +242,7 @@ export class ThreeRenderer implements GameRenderer {
       const kind: ActorKind = isBumper ? 'bumper' : pedestrianVariant(e.id);
       const actor = this.characters.acquire(e.id, kind);
       const spec = actor.spec;
-      const h = actor.humanoid;
+      const h = actor.rig;
       const x = toWorldX(e.x);
 
       if (e.knockback) {

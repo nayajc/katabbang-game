@@ -1,6 +1,18 @@
 import * as THREE from 'three';
 import { STRIDE_VU, type Pose } from '@/game/anim';
 import { WORLD_PER_VU } from './coords';
+import {
+  clamp01,
+  easeOut,
+  lerp,
+  PHASE_SPREAD,
+  SWAGGER_WEAVE,
+  TAU,
+  type CharacterRig,
+  type Palette,
+} from './rig';
+
+export type { Palette };
 
 /**
  * Procedural low-poly humanoid with a coded run cycle.
@@ -16,25 +28,13 @@ import { WORLD_PER_VU } from './coords';
  * (cane, skirt, long hair) so the crowd reads as a street rather than a squad.
  */
 
-const TAU = Math.PI * 2;
-/** Golden-angle phase spread, same constant the 2D poses used. */
-const PHASE_SPREAD = 2.39996;
-
 /** One shared unit cube; every box part is a scaled instance of it. */
 const UNIT_BOX = new THREE.BoxGeometry(1, 1, 1);
 /** Shared unit cone (diameter 1, height 1), used for skirts. */
 const UNIT_CONE = new THREE.ConeGeometry(0.5, 1, 8);
 
-export type Palette = {
-  skin: number;
-  hair: number;
-  shirt: number;
-  pants: number;
-  shoes: number;
-};
-
 /** Body plan. Everything else about a character is palette and gait. */
-export type Archetype = 'adult' | 'woman' | 'child' | 'elder';
+export type Archetype = 'adult' | 'woman' | 'child' | 'elder' | 'student' | 'tourist';
 
 export const PALETTES = {
   player: { skin: 0xffcfa0, hair: 0x241c2b, shirt: 0xffe066, pants: 0x2b3358, shoes: 0xf05a6e },
@@ -57,6 +57,13 @@ export const PED_PALETTES = {
   childB: { skin: 0xf6c8a0, hair: 0x4a2c1a, shirt: 0x7ee787, pants: 0xff6f91, shoes: 0xffd93d },
   elderA: { skin: 0xe6c0a2, hair: 0xd8d8e0, shirt: 0x8a8fa8, pants: 0x4a4f66, shoes: 0x2a2c3a },
   elderB: { skin: 0xdcb495, hair: 0xc8c6cf, shirt: 0xa89b8c, pants: 0x55506a, shoes: 0x2a2c3a },
+  // Students wear the navy/charcoal Korean school uniform, so the BACKPACK is
+  // what identifies them at a distance rather than the (deliberately drab) top.
+  studentA: { skin: 0xffd6ad, hair: 0x1b1620, shirt: 0x2a3352, pants: 0x1f2438, shoes: 0xf2f2f5 },
+  studentB: { skin: 0xf0c49c, hair: 0x2a1d18, shirt: 0x36304f, pants: 0x232035, shoes: 0xe8e4ee },
+  // Tourists are the opposite read: loudest shirt on the road plus a sun hat.
+  touristA: { skin: 0xffe0c0, hair: 0xa06a30, shirt: 0x18d0c0, pants: 0xf2ede0, shoes: 0xffffff },
+  touristB: { skin: 0xf5cba6, hair: 0x7b4a24, shirt: 0xff7a1a, pants: 0xe6e9f2, shoes: 0xf5f2ea },
 } as const satisfies Record<string, Palette>;
 
 export type HumanoidOptions = {
@@ -111,6 +118,10 @@ type Shape = Partial<Proportions> & {
   skirt?: boolean;
   /** Hair down to the shoulders instead of a cap + short back slab. */
   longHair?: boolean;
+  /** School backpack slab on the upper back. */
+  backpack?: boolean;
+  /** Wide-brim sun hat on top of the head. */
+  hat?: boolean;
 };
 
 /**
@@ -153,31 +164,28 @@ const SHAPES: Record<Archetype, Shape> = {
     headY: 0.83,
     shoulderY: 0.73,
   },
+  // Teenager: adult limbs, a slightly lighter frame, and the backpack that
+  // makes the silhouette unmistakable from behind or in front.
+  student: {
+    torsoW: 0.32,
+    torsoD: 0.19,
+    shoulderX: 0.19,
+    backpack: true,
+  },
+  // Adult proportions; the hat brim is the whole silhouette change.
+  tourist: {
+    hat: true,
+  },
 };
+
+const HAT_COLOR = 0xf2e2b8;
+const HAT_BAND_COLOR = 0x3a4a6b;
+/** Shared unit cylinder (diameter 1, height 1) for hat brim / crown. */
+const UNIT_CYL = new THREE.CylinderGeometry(0.5, 0.5, 1, 10);
 
 const CANE_COLOR = 0x6b4a2f;
 
-/**
- * Peak lateral weave of the villain's MESH, in world units. A lane is 2 world
- * units wide (see `coords.ts`), so this is ~0.4 of a lane to either side —
- * visibly menacing, and still nowhere near the neighbouring lane.
- */
-const SWAGGER_WEAVE = 0.8;
-
-function clamp01(v: number): number {
-  return v < 0 ? 0 : v > 1 ? 1 : v;
-}
-
-function lerp(a: number, b: number, t: number): number {
-  return a + (b - a) * t;
-}
-
-/** Ease-out on 0..1 — the shape of an explosive move settling. */
-function easeOut(t: number): number {
-  return 1 - (1 - t) * (1 - t);
-}
-
-export class Humanoid {
+export class Humanoid implements CharacterRig {
   /** Placed at the character's FEET; move this to position the character. */
   readonly root = new THREE.Group();
   /** Everything above the feet. Carries bob / sway / lean. */
@@ -290,6 +298,32 @@ export class Humanoid {
       const grip = -p.armLen * 0.95;
       arm.add(box(cane, 0.025, caneLen, 0.025, 0.035, grip - caneLen / 2, 0.05));
       arm.add(box(cane, 0.025, 0.02, 0.09, 0.035, grip, 0.02));
+    }
+
+    if (shape.backpack) {
+      // Hung off `body`, not a limb: a pack rides the spine, it does not swing
+      // with an arm. Straps are two thin slabs over the shoulders.
+      const packMat = mat(o.palette.pants);
+      const packH = p.torsoH * 0.78;
+      this.body.add(box(packMat, p.torsoW * 0.72, packH, 0.1, 0, p.torsoY + 0.01, -p.torsoD / 2 - 0.05));
+      this.body.add(box(packMat, p.torsoW * 0.42, 0.05, 0.05, 0, p.torsoY + packH / 2 - 0.01, -p.torsoD / 2 - 0.1));
+      for (const side of [-1, 1] as const) {
+        this.body.add(
+          box(packMat, 0.035, packH * 0.9, 0.03, side * p.torsoW * 0.28, p.torsoY + 0.02, p.torsoD / 2),
+        );
+      }
+    }
+
+    if (shape.hat) {
+      const brim = new THREE.Mesh(UNIT_CYL, mat(HAT_COLOR));
+      brim.scale.set(p.headS * 2.1 * h, 0.018 * h, p.headS * 2.1 * h);
+      brim.position.set(0, (p.headY + p.headS * 0.55) * h, 0);
+      this.body.add(brim);
+      const crown = new THREE.Mesh(UNIT_CYL, mat(HAT_COLOR));
+      crown.scale.set(p.headS * 1.15 * h, p.headS * 0.5 * h, p.headS * 1.15 * h);
+      crown.position.set(0, (p.headY + p.headS * 0.8) * h, 0);
+      this.body.add(crown);
+      this.body.add(box(mat(HAT_BAND_COLOR), p.headS * 1.2, 0.03, p.headS * 1.2, 0, p.headY + p.headS * 0.62));
     }
 
     if (o.shoulders) {
@@ -517,6 +551,3 @@ export class Humanoid {
     for (const m of this.materials) m.dispose();
   }
 }
-
-/** Wall-clock length of the {@link Humanoid.uppercut} animation. */
-export const UPPERCUT_MS = 520;

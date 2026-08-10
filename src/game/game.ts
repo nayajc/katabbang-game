@@ -94,8 +94,14 @@ export class Game {
   private fx = new Fx();
   private lastFxTs = 0;
   private debug: boolean;
-  /** Wall-clock end of the post-hit invulnerability window. */
+  /** Wall-clock end of the invulnerability window (post-hit OR post-counter). */
   private invulnUntil = 0;
+  /**
+   * Whether the running invulnerability should blink the sprite. True for the
+   * post-hit i-frames (the blink is the feedback that a hit landed), false for
+   * the silent post-counter grace, which must not read as damage.
+   */
+  private invulnBlink = false;
   /** Wall-clock start of the red hit flash. */
   private hitFlashStart = -Infinity;
   /** Wall-clock start of the current whiff jab (presentation only). */
@@ -164,6 +170,7 @@ export class Game {
     this.lastGrade = null;
     this.lastGain = 0;
     this.invulnUntil = 0;
+    this.invulnBlink = false;
     this.hitFlashStart = -Infinity;
     this.whiffStart = -Infinity;
     this.lastWhiffFxTs = -Infinity;
@@ -234,8 +241,22 @@ export class Game {
    */
   private noteHpLoss(x: number, y: number): void {
     this.invulnUntil = now() + TUNING.IFRAME_MS;
+    this.invulnBlink = true;
     this.hitFlashStart = now();
     this.fx.hurt(x, y);
+  }
+
+  /**
+   * Breathing room after a SUCCESSFUL counter: the uppercut leaves the player
+   * planted in the lane they just fought in, so anything already close behind
+   * the bumper would be an unavoidable hit. Same i-frame mechanism as a hp loss
+   * (collisions ignored, no new window arms) but silent — no flash, no blink.
+   */
+  private noteCounterGrace(): void {
+    const until = now() + TUNING.COUNTER_GRACE_MS;
+    if (until <= this.invulnUntil) return;
+    this.invulnUntil = until;
+    this.invulnBlink = false;
   }
 
   private timescale(): number {
@@ -289,6 +310,7 @@ export class Game {
       this.noteHpLoss(this.player.x, this.player.y);
     } else {
       const dir: -1 | 1 = target && target.x < this.player.x ? -1 : 1;
+      this.noteCounterGrace();
       this.fx.counterHit(fxX, fxY, grade === 'perfect', dir);
       audio.play(grade);
       if (this.score.combo > comboBefore && this.score.combo >= 2) {
@@ -347,7 +369,7 @@ export class Game {
 
     if (this.sm.is('running')) {
       const hasBumper = this.entities.some((e) => e.kind === 'bumper' && !e.dead && !e.knockback);
-      for (const e of this.spawner.update(dt, hasBumper)) this.entities.push(e);
+      for (const e of this.spawner.update(dt, hasBumper, this.speed)) this.entities.push(e);
     }
 
     this.checkCollisions();
@@ -422,7 +444,7 @@ export class Game {
       fx: this.fx,
       hitFlash: Math.max(0, 1 - (wallTs - this.hitFlashStart) / TUNING.HIT_FLASH_MS),
       playerAlpha:
-        wallTs < this.invulnUntil
+        this.invulnBlink && wallTs < this.invulnUntil
           ? Math.floor(wallTs / TUNING.IFRAME_BLINK_MS) % 2 === 0
             ? 1
             : 0.3

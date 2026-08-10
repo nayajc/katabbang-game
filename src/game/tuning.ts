@@ -57,6 +57,16 @@ export const TUNING = {
    * stacking before the player has learned the timing.
    */
   BUMPER_MIN_GAP_MS: 4000,
+  /**
+   * Safety zone (vu) around a bumper in which NOTHING else may spawn, in ANY
+   * lane. After a counter the player is standing still in the lane they just
+   * fought in, so an obstacle sitting right behind the bumper is an unavoidable
+   * hit. The zone is enforced in both directions: after a bumper spawns every
+   * spawn attempt is dropped until the world has scrolled this far, and a
+   * bumper whose predecessor is still inside the zone is held back (spawned on
+   * a later attempt) instead of being emitted on top of it.
+   */
+  BUMPER_REAR_CLEAR_VU: 500,
 
   // --- counter / slowmo ---
   /** Simulation timescale while in slow motion. */
@@ -101,6 +111,13 @@ export const TUNING = {
    * new counter window arms, so one mistake can never chain 3 -> 0.
    */
   IFRAME_MS: 1200,
+  /**
+   * Wall-clock invulnerability granted by a SUCCESSFUL counter (perfect/good).
+   * The counter leaves the player planted mid-uppercut, so they need a beat to
+   * read the road and reposition before the next body arrives. Unlike
+   * {@link IFRAME_MS} this grace is silent: no hit flash, no i-frame blink.
+   */
+  COUNTER_GRACE_MS: 800,
   /** Wall-clock duration of the red hit flash / hp heart flash. */
   HIT_FLASH_MS: 420,
   /** Screen shake amplitude on hp loss (stronger than a counter whiff). */

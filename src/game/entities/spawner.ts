@@ -39,6 +39,12 @@ export class Spawner {
   private elapsed = 0;
   /** Simulated ms since the last bumper spawn; starts "ready". */
   private sinceBumper: number = TUNING.BUMPER_MIN_GAP_MS;
+  /** vu the world has scrolled since the last bumper spawn; starts "clear". */
+  private vuSinceBumper: number = TUNING.BUMPER_REAR_CLEAR_VU;
+  /** vu the world has scrolled since ANY spawn; starts "clear". */
+  private vuSinceSpawn: number = TUNING.BUMPER_REAR_CLEAR_VU;
+  /** A bumper the rng already rolled but that is waiting for its clear zone. */
+  private pendingBumper = false;
 
   constructor(rng: Rng) {
     this.rng = rng;
@@ -50,6 +56,9 @@ export class Spawner {
     this.timer = 0;
     this.elapsed = 0;
     this.sinceBumper = TUNING.BUMPER_MIN_GAP_MS;
+    this.vuSinceBumper = TUNING.BUMPER_REAR_CLEAR_VU;
+    this.vuSinceSpawn = TUNING.BUMPER_REAR_CLEAR_VU;
+    this.pendingBumper = false;
   }
 
   /** 0 at the end of the grace period, 1 once the run is at full difficulty. */
@@ -58,10 +67,19 @@ export class Spawner {
     return Math.max(0, Math.min(1, t));
   }
 
-  /** Advance the spawn clock; returns entities created this step. */
-  update(dt: number, hasActiveBumper: boolean): Entity[] {
+  /**
+   * Advance the spawn clock; returns entities created this step.
+   *
+   * `speed` (vu/s of simulated time) is what the world scroll uses this step, so
+   * the bumper clear zone can be measured in vu — the units the player actually
+   * experiences — rather than in ms, which would shrink as the run speeds up.
+   */
+  update(dt: number, hasActiveBumper: boolean, speed: number = TUNING.BASE_SPEED): Entity[] {
     this.elapsed += dt;
     this.sinceBumper += dt;
+    const scrolled = (speed * dt) / 1000;
+    this.vuSinceBumper += scrolled;
+    this.vuSinceSpawn += scrolled;
     const out: Entity[] = [];
     if (this.elapsed < TUNING.SPAWN_GRACE_MS) return out;
 
@@ -73,11 +91,29 @@ export class Spawner {
 
     while (this.timer >= interval) {
       this.timer -= interval;
+      // Rear safety zone: while the world is still inside the last bumper's
+      // clear distance, every spawn attempt is dropped (all lanes). No rng is
+      // drawn here, so suppression cannot shift the sequence.
+      if (this.vuSinceBumper < TUNING.BUMPER_REAR_CLEAR_VU) continue;
       const lane = this.rng.int(0, TUNING.LANES - 1);
       const bumperAllowed = !hasActiveBumper && this.sinceBumper >= bumperGap;
       const kind: EntityKind =
-        bumperAllowed && this.rng.chance(bumperChance) ? 'bumper' : 'pedestrian';
-      if (kind === 'bumper') this.sinceBumper = 0;
+        this.pendingBumper || (bumperAllowed && this.rng.chance(bumperChance))
+          ? 'bumper'
+          : 'pedestrian';
+      // Same zone in the other direction: a bumper may not land on the heels of
+      // the entity ahead of it, so hold it back until the gap has opened. The
+      // attempt spawns nothing, which is what lets the gap open at all.
+      if (kind === 'bumper' && (this.vuSinceSpawn < TUNING.BUMPER_REAR_CLEAR_VU || hasActiveBumper)) {
+        this.pendingBumper = true;
+        continue;
+      }
+      if (kind === 'bumper') {
+        this.sinceBumper = 0;
+        this.vuSinceBumper = 0;
+        this.pendingBumper = false;
+      }
+      this.vuSinceSpawn = 0;
       out.push({
         id: this.nextId++,
         kind,

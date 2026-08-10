@@ -63,6 +63,12 @@ export type GameView = {
   hitFlash: number;
   /** Sprite alpha for the i-frame blink (1 when not invulnerable). */
   playerAlpha: number;
+  /**
+   * WHIFF reaction progress: 0..1 across {@link TUNING.WHIFF_MS} while the
+   * player's light jab plays, and >= 1 (or -Infinity before the first one) when
+   * it is not. Presentation only — nothing in the simulation reads it.
+   */
+  whiffProgress: number;
 };
 
 export class Game {
@@ -92,6 +98,10 @@ export class Game {
   private invulnUntil = 0;
   /** Wall-clock start of the red hit flash. */
   private hitFlashStart = -Infinity;
+  /** Wall-clock start of the current whiff jab (presentation only). */
+  private whiffStart = -Infinity;
+  /** Wall-clock time the last whiff caption + swish were emitted. */
+  private lastWhiffFxTs = -Infinity;
 
   constructor(opts: GameOptions) {
     this.canvas = opts.canvas;
@@ -155,6 +165,8 @@ export class Game {
     this.lastGain = 0;
     this.invulnUntil = 0;
     this.hitFlashStart = -Infinity;
+    this.whiffStart = -Infinity;
+    this.lastWhiffFxTs = -Infinity;
     this.fx.reset();
     this.canvas.dataset.playerLane = String(this.player.lane);
     this.sm.set('running');
@@ -166,13 +178,42 @@ export class Game {
       this.startRun();
       return;
     }
-    if (!this.sm.is('slowmo') || !this.counter.active) return;
+    if (!this.sm.is('slowmo') || !this.counter.active) {
+      this.noteWhiff();
+      return;
+    }
     const deltaMs = ts - this.counter.windowCenterTs;
     const grade = this.counter.submit(ts);
     if (grade) {
       this.noteJudge(grade, deltaMs);
       this.resolveCounter(grade);
     }
+  }
+
+  /**
+   * The counter input pressed with NO window armed — a whiffed swing.
+   *
+   * Purely a reaction: the player throws a light jab, a swish plays, and a tiny
+   * caption pops. Nothing here touches hp, score, the counter, the state machine
+   * or any cooldown, so pressing the input off-beat stays free — it just stops
+   * being silent, which is what made desktop players report Space as dead.
+   *
+   * The animation restarts on every press (mashing looks like fast jabs), while
+   * the caption and the sound are rate-limited to one per WHIFF_MS.
+   */
+  private noteWhiff(): void {
+    const t = now();
+    this.whiffStart = t;
+    // Diagnostics, same contract as `data-last-judge`: a per-PRESS attribute
+    // write (not per-frame), so it is free and always on. It counts every
+    // whiffed press, NOT every reaction, because its job is to prove end-to-end
+    // that the counter key reached the game at all.
+    const stage = this.canvas.closest<HTMLElement>('[data-phase]') ?? this.canvas;
+    stage.dataset.whiffs = String(Number(stage.dataset.whiffs ?? 0) + 1);
+    if (t - this.lastWhiffFxTs < TUNING.WHIFF_MS) return;
+    this.lastWhiffFxTs = t;
+    this.fx.whiff(this.player.x, this.player.y);
+    audio.play('whiff');
   }
 
   private onLane(dir: -1 | 1): void {
@@ -386,6 +427,7 @@ export class Game {
             ? 1
             : 0.3
           : 1,
+      whiffProgress: (wallTs - this.whiffStart) / TUNING.WHIFF_MS,
     };
     // Diagnostics only, and only under ?debug=1 — a per-frame dataset write is
     // an attribute mutation the normal render path must never pay for.

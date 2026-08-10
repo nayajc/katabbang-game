@@ -85,6 +85,14 @@ export const TUNING = {
   HITSTOP_MS: 90,
   /** Wall-clock duration of the result banner. */
   RESULT_MS: 620,
+  /**
+   * Wall-clock length of the WHIFF reaction — the light jab the player throws
+   * when the counter input is pressed with no window armed. Presentation only:
+   * it costs no hp, no score and no cooldown, and the simulation never reads it.
+   * Deliberately much shorter than the 520ms uppercut so the two never read as
+   * the same move.
+   */
+  WHIFF_MS: 250,
 
   // --- scoring / hp ---
   HP_MAX: 3,

@@ -110,6 +110,28 @@ export class Fx {
     this.comic.pop(getStrings().fxOuch, x, y - 34, { size: 48, color: '#ff6b6b', life: 620, burst: true });
   }
 
+  /**
+   * WHIFF — the counter input pressed with no window armed.
+   *
+   * Presentation only, and deliberately the quietest thing in this file: one
+   * small faint caption, NO particles and NO shake. It exists so the key press
+   * is visibly acknowledged (see the desktop "Space does nothing" report), not
+   * to reward it. The caller rate-limits it so a mashed input cannot stack six
+   * captions on top of each other.
+   */
+  whiff(x: number, y: number): void {
+    // Offset sideways, because `ComicView` pins every caption to one world
+    // height (the pop's y only sets its DEPTH) — dead centre would land on the
+    // player's head. Size 30 is the floor at which the caption still reads: the
+    // slot texture is painted at a fixed 92px with a 20px outline, so scaling it
+    // much smaller than this turns the outline into a black slab.
+    this.comic.pop(getStrings().fxSwish, x + 52, y - 40, {
+      size: 30,
+      color: '#dbe4ff',
+      life: 320,
+    });
+  }
+
   comboUp(combo: number, x: number, y: number): void {
     this.comic.pop(`${combo} ${getStrings().fxCombo}`, x, y, { size: 34, color: '#8ab4ff', life: 620 });
   }

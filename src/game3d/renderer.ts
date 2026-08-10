@@ -216,6 +216,11 @@ export class ThreeRenderer implements GameRenderer {
     if (uppercut >= 0 && uppercut < 1) {
       // 승룡권. Owns the whole rig for its 520ms, gait included.
       actor.humanoid.uppercut(uppercut, -1);
+    } else if (view.whiffProgress >= 0 && view.whiffProgress < 1) {
+      // Whiffed swing: the input was pressed with no window armed. Ranked below
+      // the uppercut so a press during the result phase can never cut the
+      // 승룡권 short, and above the run cycle so the jab is actually visible.
+      actor.humanoid.jab(view.whiffProgress, -1);
     } else if (countering) {
       actor.humanoid.plant(0.28);
       actor.humanoid.applyPose(playerCounterPose(POSE, view.fx.slowmo), p.lean, -1);

@@ -1,4 +1,5 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
+import { huntCounterWindow } from './encounter';
 
 /**
  * Lane controls.
@@ -119,25 +120,18 @@ test('the lane buttons are absent on the title screen and return for a run', asy
 });
 
 test('a lane button tap during slowmo does not count as a counter tap', async ({ page }) => {
-  // Reaching a bumper encounter is spawn-RNG bound: an idle run needs anywhere
-  // from ~10s to ~60s of retries before one engages in the player's lane.
-  test.setTimeout(220_000);
-  await page.goto('/');
+  // See tests/e2e/encounter.ts for why the hunt is budgeted this way and why it
+  // must run in-page rather than as a Playwright polling loop.
+  test.setTimeout(320_000);
+  // ?debug=1 publishes `data-counter-lead`, which `huntCounterWindow` needs.
+  await page.goto('/play?debug=1');
   const stage = page.locator('[data-phase]');
   const canvas = page.getByTestId('game-canvas');
   await page.getByTestId('start-button').click();
 
-  // Bumpers only engage in the player's lane, and the idle player can run out of
-  // HP on pedestrians first — so retry runs until one bumper engages.
-  const deadline = Date.now() + 170_000;
-  let phase = await stage.getAttribute('data-phase');
-  while (phase !== 'slowmo' && Date.now() < deadline) {
-    if (phase === 'gameover') await page.getByTestId('retry-button').click();
-    await page.waitForTimeout(50);
-    phase = await stage.getAttribute('data-phase');
-  }
-  expect(phase).toBe('slowmo');
-  const before = await lane(canvas);
+  const encounter = await huntCounterWindow(page);
+  expect(encounter, 'a bumper engaged with a fresh counter window').not.toBeNull();
+  const before = encounter!.lane;
 
   // A counter tap would resolve the window and flip the phase to 'result';
   // a lane button tap must only move the player.

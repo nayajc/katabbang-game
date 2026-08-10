@@ -146,21 +146,43 @@ export default function GameCanvas({ onGameOver }: GameCanvasProps) {
     pointerConsumedBy.current = null;
   }, []);
 
+  /**
+   * Belt-and-braces against a control button holding keyboard focus.
+   *
+   * A focused <button> natively activates on Space, which would make the
+   * desktop counter key move a lane / toggle mute instead of striking. Two
+   * things already stop that today, and both were verified end-to-end in
+   * Chromium AND WebKit: `onPointerDown` calls `preventDefault()`, which
+   * suppresses the compat mousedown that would focus the button in the first
+   * place; and the window `keydown` handler in `input.ts` calls
+   * `preventDefault()`, which cancels the button's activation behaviour even
+   * when focus IS forced onto it.
+   *
+   * Both of those are load-bearing side effects of code written for other
+   * reasons, so the focus is also dropped explicitly here — it costs nothing
+   * and it makes the guarantee local to the control.
+   */
+  const dropFocus = useCallback((e: { currentTarget: HTMLButtonElement }) => {
+    e.currentTarget.blur();
+  }, []);
+
   const laneOf = (el: HTMLElement): -1 | 1 => (el.dataset.dir === '1' ? 1 : -1);
 
   const onLanePointerDown = useCallback((e: React.PointerEvent<HTMLButtonElement>) => {
     notePointerDown(e.timeStamp);
     e.preventDefault();
     pointerConsumedBy.current = e.currentTarget;
+    dropFocus(e);
     gameRef.current?.laneTap(laneOf(e.currentTarget));
-  }, []);
+  }, [dropFocus]);
 
   const onLaneClick = useCallback(
     (e: React.MouseEvent<HTMLButtonElement>) => {
+      dropFocus(e);
       if (clickIsDuplicate(e)) return;
       gameRef.current?.laneTap(laneOf(e.currentTarget));
     },
-    [clickIsDuplicate],
+    [clickIsDuplicate, dropFocus],
   );
 
   const toggleMute = useCallback(() => {
@@ -173,17 +195,19 @@ export default function GameCanvas({ onGameOver }: GameCanvasProps) {
       notePointerDown(e.timeStamp);
       e.preventDefault();
       pointerConsumedBy.current = e.currentTarget;
+      dropFocus(e);
       toggleMute();
     },
-    [toggleMute],
+    [dropFocus, toggleMute],
   );
 
   const onMuteClick = useCallback(
     (e: React.MouseEvent<HTMLButtonElement>) => {
+      dropFocus(e);
       if (clickIsDuplicate(e)) return;
       toggleMute();
     },
-    [clickIsDuplicate, toggleMute],
+    [clickIsDuplicate, dropFocus, toggleMute],
   );
 
   const controlsVisible = phase === 'running' || phase === 'slowmo' || phase === 'result';
@@ -213,6 +237,10 @@ export default function GameCanvas({ onGameOver }: GameCanvasProps) {
             aria-label="lane left"
             data-testid="lane-left"
             data-dir="-1"
+            // Arrow keys already cover lanes, so these are pointer-only
+            // controls; keeping them out of the tab order means Space can
+            // never reach them.
+            tabIndex={-1}
             onPointerDown={onLanePointerDown}
             onPointerCancel={onPointerCancel}
             onClick={onLaneClick}
@@ -225,6 +253,7 @@ export default function GameCanvas({ onGameOver }: GameCanvasProps) {
             aria-label="lane right"
             data-testid="lane-right"
             data-dir="1"
+            tabIndex={-1}
             onPointerDown={onLanePointerDown}
             onPointerCancel={onPointerCancel}
             onClick={onLaneClick}

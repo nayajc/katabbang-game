@@ -6,7 +6,16 @@
  * and `resume()`d again on every play in case the OS suspended it.
  */
 
-export type SfxName = 'perfect' | 'good' | 'miss' | 'collision' | 'combo' | 'gameover';
+export type SfxName =
+  | 'perfect'
+  | 'good'
+  | 'miss'
+  | 'collision'
+  | 'combo'
+  | 'gameover'
+  /** Air-cut whoosh for a whiffed swing — no impact body, so it can never be
+   * mistaken for a landed hit. */
+  | 'whiff';
 
 const MUTE_KEY = 'katabbang.muted';
 
@@ -94,6 +103,9 @@ class AudioEngine {
         this.blip(t, 990, 1480, 0.1, 'triangle', 0.2);
         this.blip(t + 0.07, 1480, 1980, 0.12, 'triangle', 0.18);
         break;
+      case 'whiff':
+        this.swish(t, 0.16);
+        break;
       case 'gameover':
         this.blip(t, 440, 220, 0.3, 'sawtooth', 0.22);
         this.blip(t + 0.18, 330, 110, 0.5, 'sawtooth', 0.22);
@@ -168,6 +180,32 @@ class AudioEngine {
     filter.Q.value = 0.8;
     const g = ctx.createGain();
     g.gain.setValueAtTime(gain, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    src.connect(filter).connect(g).connect(this.master);
+    src.start(t);
+    src.stop(t + dur + 0.02);
+  }
+
+  /**
+   * Air-cut whoosh: narrow band of noise swept UP and back down, with no low
+   * body at all. {@link crash} sweeps the band DOWNWARD over a thump, which is
+   * what an impact sounds like — this is deliberately the inverse, and quiet,
+   * so a whiffed swing can never be mistaken for a landed one.
+   */
+  private swish(t: number, dur: number): void {
+    const ctx = this.ctx;
+    if (!ctx || !this.master) return;
+    const src = ctx.createBufferSource();
+    src.buffer = this.noiseBuffer(ctx);
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.Q.value = 5.5;
+    filter.frequency.setValueAtTime(700, t);
+    filter.frequency.exponentialRampToValueAtTime(4200, t + dur * 0.45);
+    filter.frequency.exponentialRampToValueAtTime(900, t + dur);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.16, t + dur * 0.3);
     g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
     src.connect(filter).connect(g).connect(this.master);
     src.start(t);

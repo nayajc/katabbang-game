@@ -448,6 +448,42 @@ export class Humanoid {
     this.limbs[2].rotation.x = lerp(-0.5 * down, 0.85, air);
   }
 
+  /**
+   * Light jab — the WHIFF reaction, thrown when the counter input is pressed
+   * with no window armed.
+   *
+   * Same articulation vocabulary as {@link uppercut} and just as self-contained
+   * (it owns all four limbs plus the body transform, so nothing needs
+   * unwinding), but deliberately a much smaller move: no leap, no squash, the
+   * feet stay planted and the arm punches STRAIGHT forward instead of overhead.
+   *
+   * `t` runs 0..1 on the wall clock over `TUNING.WHIFF_MS`:
+   *   0.00 - 0.35  arm snaps out to full extension, body twists into it
+   *   0.35 - 0.50  brief hold at extension
+   *   0.50 - 1.00  retract to guard
+   */
+  jab(t: number, facing: 1 | -1 = 1): void {
+    const k = clamp01(t);
+    // 0 at rest, 1 at full extension.
+    const out = k < 0.35 ? easeOut(k / 0.35) : 1 - easeOut(clamp01((k - 0.5) / 0.5));
+
+    this.body.position.set(0, 0, 0);
+    // Slight forward lean + a shoulder twist through the punch. A third of the
+    // uppercut's torque, so the two moves never read as the same animation.
+    this.body.rotation.set(this.hunch + 0.1 * out, 0.38 * out * facing, -0.07 * out * facing);
+    this.body.scale.set(1, 1, 1);
+
+    // Right arm (limbs[3]) punches: hangs at 0, horizontal forward at -PI/2.
+    this.limbs[3].rotation.x = lerp(0.35, -1.62, out);
+    this.limbs[3].rotation.z = -0.12 * out * facing;
+    // Left arm stays up as a guard across the chest.
+    this.limbs[1].rotation.x = lerp(-0.15, -0.55, out);
+    this.limbs[1].rotation.z = 0;
+    // Feet planted, knees barely absorbing the twist — no stride, no jump.
+    this.limbs[0].rotation.x = 0.2 * out;
+    this.limbs[2].rotation.x = -0.16 * out;
+  }
+
   /** i-frame blink. Skips the material walk entirely at full opacity. */
   setOpacity(alpha: number): void {
     const transparent = alpha < 0.999;

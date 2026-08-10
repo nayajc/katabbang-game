@@ -77,8 +77,8 @@ export const TUNING = {
   /** Wall-clock lead (ms) over which the approach ring shrinks onto the target. */
   COUNTER_CUE_LEAD_MS: 900,
   /** Wall-clock judgement windows (ms). */
-  PERFECT_MS: 100,
-  GOOD_MS: 250,
+  PERFECT_MS: 130,
+  GOOD_MS: 350,
   /** Extra wall-clock grace after the window closes before declaring a miss. */
   MISS_GRACE_MS: 60,
   /** Wall-clock hitstop after a successful counter. */

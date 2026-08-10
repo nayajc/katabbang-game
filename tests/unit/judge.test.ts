@@ -36,12 +36,13 @@ describe('judge()', () => {
   });
 
   it('the shipped windows are the human-feel widths', () => {
-    // Widened from 60/140 after the impact-alignment fix; see counter-alignment.
-    expect(TUNING.PERFECT_MS).toBe(100);
-    expect(TUNING.GOOD_MS).toBe(250);
-    expect(judge(CENTER + 100, CENTER)).toBe('perfect');
-    expect(judge(CENTER - 250, CENTER)).toBe('good');
-    expect(judge(CENTER + 251, CENTER)).toBe('miss');
+    // Widened from 60/140 (impact-alignment fix), then 100/250 -> 130/350
+    // on user feedback that mobile timing felt too strict.
+    expect(TUNING.PERFECT_MS).toBe(130);
+    expect(TUNING.GOOD_MS).toBe(350);
+    expect(judge(CENTER + 130, CENTER)).toBe('perfect');
+    expect(judge(CENTER - 350, CENTER)).toBe('good');
+    expect(judge(CENTER + 351, CENTER)).toBe('miss');
   });
 
   it('window widths come from tuning, not hardcoded', () => {

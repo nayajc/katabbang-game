@@ -42,7 +42,7 @@ describe('checkNickname', () => {
 describe('shareText', () => {
   it('includes the score and the url', () => {
     expect(shareText(1234, 'https://example.com')).toBe(
-      '어깨빵 응징 러너에서 1234점! 정의구현 하러 가기 → https://example.com',
+      '어깨빵 참교육에서 1234점! 정의구현 하러 가기 → https://example.com',
     );
   });
 });

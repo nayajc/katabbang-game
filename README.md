@@ -1,3 +1,7 @@
+# 어깨빵 참교육 (Bump Back: Street Justice / 反弹撞肩)
+
+A 3-lane runner where you dodge pedestrians and counter the shoulder-checking villain in slow motion.
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started

@@ -31,7 +31,7 @@ export const LOCALE_LABEL: Record<Locale, string> = {
 
 const ko = {
   /** Title screen + shared branding. */
-  title: '어깨빵 응징 러너',
+  title: '어깨빵 참교육',
   hintLine1: '스와이프로 피하고, 어깨빵 시전자가 오면 탭!',
   hintLine2: '데스크톱: ←/→ 이동, Space/Enter 응징',
   muteHint: '우측 상단 🔊 버튼으로 음소거',
@@ -75,12 +75,12 @@ const ko = {
   shareCopied: '점수 링크를 복사했어요!',
   shareFailed: '공유에 실패했어요.',
   shareText: (score: number, url: string) =>
-    `어깨빵 응징 러너에서 ${score}점! 정의구현 하러 가기 → ${url}`,
+    `어깨빵 참교육에서 ${score}점! 정의구현 하러 가기 → ${url}`,
 
   /** Leaderboard. */
   top100Link: 'TOP 100 보기',
   leaderboardHeading: 'TOP 100',
-  leaderboardSub: '어깨빵 응징 러너 글로벌 랭킹',
+  leaderboardSub: '어깨빵 참교육 글로벌 랭킹',
   leaderboardCardTitle: '리더보드',
   leaderboardPending: '리더보드 준비 중',
   leaderboardError: '리더보드를 불러오지 못했어요.',
@@ -100,7 +100,7 @@ const ko = {
 export type Strings = typeof ko;
 
 const en: Strings = {
-  title: 'Shoulder Check Payback',
+  title: 'Bump Back: Street Justice',
   hintLine1: 'Swipe to dodge — when a shoulder-checker charges in, TAP!',
   hintLine2: 'Desktop: ←/→ to move, Space/Enter to strike back',
   muteHint: 'Tap the 🔊 button (top right) to mute',
@@ -139,11 +139,11 @@ const en: Strings = {
   shareCopied: 'Score link copied!',
   shareFailed: 'Sharing failed.',
   shareText: (score: number, url: string) =>
-    `I scored ${score} in Shoulder Check Payback! Serve some justice → ${url}`,
+    `I scored ${score} in Bump Back: Street Justice! Serve some justice → ${url}`,
 
   top100Link: 'View TOP 100',
   leaderboardHeading: 'TOP 100',
-  leaderboardSub: 'Shoulder Check Payback global ranking',
+  leaderboardSub: 'Bump Back: Street Justice global ranking',
   leaderboardCardTitle: 'LEADERBOARD',
   leaderboardPending: 'Leaderboard coming soon',
   leaderboardError: 'Could not load the leaderboard.',
@@ -160,7 +160,7 @@ const en: Strings = {
 };
 
 const zh: Strings = {
-  title: '撞肩制裁跑酷',
+  title: '反弹撞肩',
   hintLine1: '滑动闪避，撞肩者冲来时——点击!',
   hintLine2: '桌面端: ←/→ 移动, Space/Enter 反击',
   muteHint: '点击右上角 🔊 按钮静音',
@@ -199,11 +199,11 @@ const zh: Strings = {
   shareCopied: '已复制分数链接!',
   shareFailed: '分享失败。',
   shareText: (score: number, url: string) =>
-    `我在《撞肩制裁跑酷》拿到 ${score} 分! 一起来制裁 → ${url}`,
+    `我在《反弹撞肩》拿到 ${score} 分! 一起来制裁 → ${url}`,
 
   top100Link: '查看 TOP 100',
   leaderboardHeading: 'TOP 100',
-  leaderboardSub: '《撞肩制裁跑酷》全球排行',
+  leaderboardSub: '《反弹撞肩》全球排行',
   leaderboardCardTitle: '排行榜',
   leaderboardPending: '排行榜准备中',
   leaderboardError: '排行榜加载失败。',

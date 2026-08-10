@@ -6,19 +6,20 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
 
 export const metadata: Metadata = {
   ...(siteUrl ? { metadataBase: new URL(siteUrl) } : {}),
-  title: '어깨빵 응징 러너',
-  description: '어깨빵 시전자를 슬로우모션 타이밍 반격으로 응징하는 3레인 러너 게임.',
+  title: '어깨빵 참교육',
+  description:
+    '어깨빵 시전자를 슬로우모션 타이밍 반격으로 참교육하는 3레인 러너 게임. (Bump Back: Street Justice)',
   openGraph: {
-    title: '어깨빵 응징 러너',
-    description: '어깨빵 시전자를 응징하라. 정의구현!',
-    siteName: '어깨빵 응징 러너',
+    title: '어깨빵 참교육',
+    description: '어깨빵 시전자를 참교육하라. 정의구현!',
+    siteName: '어깨빵 참교육',
     locale: 'ko_KR',
     type: 'website',
   },
   twitter: {
     card: 'summary',
-    title: '어깨빵 응징 러너',
-    description: '어깨빵 시전자를 응징하라. 정의구현!',
+    title: '어깨빵 참교육',
+    description: '어깨빵 시전자를 참교육하라. 정의구현!',
   },
 };
 

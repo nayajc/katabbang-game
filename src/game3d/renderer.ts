@@ -51,6 +51,14 @@ const IMPACT = {
   bubbleOffsetX: 0.95,
 } as const;
 
+/**
+ * Where the villain's swagger starts, as a gap in virtual units. It ramps from
+ * nothing here to FULL at `SLOWMO_TRIGGER_DIST` — so the strut peaks exactly as
+ * the counter window opens and the wind-up takes the rig over.
+ */
+const SWAGGER_START_VU = TUNING.SLOWMO_TRIGGER_DIST * 3;
+const SWAGGER_SPAN_VU = SWAGGER_START_VU - TUNING.SLOWMO_TRIGGER_DIST;
+
 const POSE = createPose();
 
 export type ThreeRendererOptions = {
@@ -251,9 +259,22 @@ export class ThreeRenderer implements GameRenderer {
       actor.shadow.position.set(x, 0.015, z);
 
       if (isBumper) {
-        h.stride(view.scrollY, e.id, spec.strideMul);
-        h.applyPose(bumperPose(POSE, e.id, view.scrollY, view.player.y - e.y));
-        if (e.engaged && view.phase === 'slowmo') this.ring.show(x, z, view.counterLeadMs);
+        if (e.engaged && view.phase === 'slowmo') {
+          // Rearing back for the 어깨빵. Driven off `counterLeadMs`, the same
+          // wall-clock number the cue ring shrinks on, so the pose and the ring
+          // tighten together and the player can read WHEN to counter.
+          h.windUp(1 - THREE.MathUtils.clamp(view.counterLeadMs / TUNING.COUNTER_CUE_LEAD_MS, 0, 1));
+          this.ring.show(x, z, view.counterLeadMs);
+        } else {
+          const gap = view.player.y - e.y;
+          h.stride(view.scrollY, e.id, spec.strideMul);
+          h.applyPose(bumperPose(POSE, e.id, view.scrollY, gap));
+          // Mesh-only weave: `root` (the lane) is untouched, so nothing the
+          // simulation reads moves — only the shadow follows the body across.
+          const amp = (SWAGGER_START_VU - gap) / SWAGGER_SPAN_VU;
+          const weave = h.swagger(view.scrollY, e.id, spec.strideMul, amp);
+          actor.shadow.position.x = x + weave;
+        }
       } else {
         // Same stride multiplier on both halves of the gait, or the bob drifts
         // out of phase with the legs.

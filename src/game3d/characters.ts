@@ -51,6 +51,8 @@ export class Actor {
       swing: spec.swing,
       shoulders: spec.shoulders,
       archetype: spec.archetype,
+      bulk: spec.bulk,
+      hunch: spec.hunch,
     });
     this.shadow = new THREE.Mesh(SHADOW_GEO, shadowMat);
     this.shadow.rotation.x = -Math.PI / 2;
@@ -76,6 +78,10 @@ export type ActorSpec = {
   swing: number;
   shoulders?: boolean;
   archetype?: Archetype;
+  /** Extra width on top of `height`'s uniform scale — see `HumanoidOptions`. */
+  bulk?: number;
+  /** Permanent forward stoop in radians. */
+  hunch?: number;
   /** Gait cycle length multiplier — bigger is a longer, slower stride. */
   strideMul: number;
   /** Multipliers on the shared pedestrian pose's bob / sway. */
@@ -91,8 +97,18 @@ const SHADOW_GEO = new THREE.PlaneGeometry(1, 1);
  * bounce (short quick cycle, exaggerated bob) and women get a touch more sway.
  */
 const SPECS: Record<ActorKind, ActorSpec> = {
-  // The villain is visibly bigger and plods with a heavy, wide swing.
-  bumper: { height: ENTITY_H * 1.22, swing: 0.62, shoulders: true, strideMul: 1.45, bobMul: 1, swayMul: 1 },
+  // The villain out-sizes every adult on the road — ~1.4x tall and broader
+  // again on top of that — and plods with a heavy, wide swing.
+  bumper: {
+    height: ENTITY_H * 1.4,
+    swing: 0.62,
+    shoulders: true,
+    bulk: 1.18,
+    hunch: 0.1,
+    strideMul: 1.45,
+    bobMul: 1,
+    swayMul: 1,
+  },
   adultA: { height: ENTITY_H, swing: 0.5, strideMul: 1.25, bobMul: 1, swayMul: 1 },
   adultB: { height: ENTITY_H * 1.04, swing: 0.52, strideMul: 1.34, bobMul: 1, swayMul: 1 },
   womanA: { height: ENTITY_H * 0.95, swing: 0.44, archetype: 'woman', strideMul: 1.16, bobMul: 0.9, swayMul: 1.2 },

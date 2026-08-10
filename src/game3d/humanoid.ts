@@ -38,7 +38,9 @@ export type Archetype = 'adult' | 'woman' | 'child' | 'elder';
 
 export const PALETTES = {
   player: { skin: 0xffcfa0, hair: 0x241c2b, shirt: 0xffe066, pants: 0x2b3358, shoes: 0xf05a6e },
-  bumper: { skin: 0xe8b48c, hair: 0x140f18, shirt: 0xff5c7a, pants: 0x1b1a2b, shoes: 0x101019 },
+  // The villain is the darkest thing on the road: near-black legs and a deep
+  // blood-red torso, so it reads as a threat against a crowd of bright shirts.
+  bumper: { skin: 0xc08a63, hair: 0x08060c, shirt: 0x8e1226, pants: 0x121018, shoes: 0x08080e },
 } as const satisfies Record<string, Palette>;
 
 /**
@@ -67,6 +69,14 @@ export type HumanoidOptions = {
   shoulders?: boolean;
   /** Body plan. Defaults to `adult` (the original rig, unchanged). */
   archetype?: Archetype;
+  /**
+   * Extra WIDTH multiplier, on top of the uniform scaling `height` already
+   * does. 1 is the normal build; >1 broadens the torso, shoulders and limbs
+   * without making the character taller — the villain's slab-shouldered bulk.
+   */
+  bulk?: number;
+  /** Forward stoop in radians, added to every pose (overrides the archetype's). */
+  hunch?: number;
 };
 
 /** Proportions as a fraction of total height. */
@@ -147,6 +157,13 @@ const SHAPES: Record<Archetype, Shape> = {
 
 const CANE_COLOR = 0x6b4a2f;
 
+/**
+ * Peak lateral weave of the villain's MESH, in world units. A lane is 2 world
+ * units wide (see `coords.ts`), so this is ~0.4 of a lane to either side —
+ * visibly menacing, and still nowhere near the neighbouring lane.
+ */
+const SWAGGER_WEAVE = 0.8;
+
 function clamp01(v: number): number {
   return v < 0 ? 0 : v > 1 ? 1 : v;
 }
@@ -177,7 +194,20 @@ export class Humanoid {
     this.swing = o.swing ?? 0.85;
     const shape = SHAPES[o.archetype ?? 'adult'];
     const p: Proportions = { ...P, ...shape };
-    this.hunch = shape.hunch ?? 0;
+    const bulk = o.bulk ?? 1;
+    if (bulk !== 1) {
+      // Width only — `hipY`/`legLen` are untouched, so the feet stay on the
+      // ground plane and the archetype invariant still holds.
+      p.torsoW *= bulk;
+      p.torsoD *= bulk;
+      p.shoulderX *= bulk;
+      p.hipX *= bulk;
+      p.armW *= bulk;
+      p.armD *= bulk;
+      p.legW *= bulk;
+      p.legD *= bulk;
+    }
+    this.hunch = o.hunch ?? shape.hunch ?? 0;
     const h = o.height;
     const mat = (color: number) => {
       const m = new THREE.MeshLambertMaterial({ color });
@@ -263,9 +293,12 @@ export class Humanoid {
     }
 
     if (o.shoulders) {
+      // Pads take the bulk multiplier a second time: the shoulders are the part
+      // of the silhouette that has to read as "bigger than you" from far away.
+      const padW = 0.16 * bulk * 1.25;
       for (const side of [-1, 1] as const) {
         this.body.add(
-          box(pants, 0.16, 0.11, p.torsoD * 1.1, side * 0.16, p.torsoY + p.torsoH / 2 - 0.02),
+          box(pants, padW, 0.125, p.torsoD * 1.1, side * padW, p.torsoY + p.torsoH / 2 - 0.02),
         );
       }
     }
@@ -312,6 +345,66 @@ export class Humanoid {
     this.body.position.x = pose.sway * WORLD_PER_VU * facing;
     this.body.rotation.set(pose.rot * facing + this.hunch, 0, -lean * facing);
     this.body.scale.set(pose.scaleX, pose.scaleY, pose.scaleX);
+  }
+
+  /**
+   * Villain swagger — an OVERLAY, so it must be called after {@link applyPose}.
+   *
+   * The shoulders swing left-right (yaw) and roll into the swing, the elbows
+   * flare out and the whole mass weaves across the lane. Distance-driven like
+   * every other gait here, at half the stride frequency: one full left-right
+   * weave per two steps, so it reads as a strut and not a wobble.
+   *
+   * `amp` is the proximity ramp (0 far down the road, 1 on top of the player) —
+   * the swagger grows as the villain closes in.
+   *
+   * @returns the lateral world offset applied to the MESH, so the caller can
+   * slide the blob shadow with it. The lane position (`root`) never moves, so
+   * collision and the counter engage stay purely lane-based.
+   */
+  swagger(scrollY: number, idPhase: number, strideMul: number, amp: number): number {
+    const a = clamp01(amp);
+    const p = (scrollY / (STRIDE_VU * strideMul * 2)) * TAU + idPhase * PHASE_SPREAD;
+    const s = Math.sin(p);
+    const weave = s * SWAGGER_WEAVE * a;
+    this.body.position.x += weave;
+    this.body.rotation.y += s * 0.5 * a;
+    this.body.rotation.z += Math.cos(p) * 0.24 * a;
+    // Head and chest dropped forward — the "coming through" posture.
+    this.body.rotation.x += 0.12 * a;
+    const flare = 0.24 + 0.38 * a;
+    this.limbs[1].rotation.z = -flare;
+    this.limbs[3].rotation.z = flare;
+    return weave;
+  }
+
+  /**
+   * Shoulder-bash wind-up, held through the counter window.
+   *
+   * `t` runs 0..1 on the WALL clock — the caller derives it from the same
+   * `counterLeadMs` the shrinking cue ring uses, so the pose tightens in lockstep
+   * with the ring closing. The near shoulder is cocked back and the torso twists
+   * away from the player, which is the tell: you can SEE the 어깨빵 being loaded.
+   *
+   * Owns the whole rig (gait included) while it runs, exactly like
+   * {@link uppercut}, so no caller has to unwind it.
+   */
+  windUp(t: number): void {
+    const k = easeOut(clamp01(t));
+    this.body.position.x = 0;
+    this.body.position.y = 0;
+    // Torso twisted away + rolled onto the loaded shoulder.
+    this.body.rotation.set(this.hunch + 0.26 * k, -0.7 * k, 0.2 * k);
+    // Coiled: broader and lower as the window closes.
+    this.body.scale.set(1 + 0.12 * k, 1 - 0.07 * k, 1);
+    // Right arm hauls back behind the hip, left arm counter-reaches across.
+    this.limbs[3].rotation.x = 0.85 * k;
+    this.limbs[3].rotation.z = 0.62 * k;
+    this.limbs[1].rotation.x = -0.5 * k;
+    this.limbs[1].rotation.z = -0.28 * k;
+    // Wide braced stance to push off from.
+    this.limbs[0].rotation.x = 0.34 * k;
+    this.limbs[2].rotation.x = -0.26 * k;
   }
 
   /**

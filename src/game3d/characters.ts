@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { TUNING } from '@/game/tuning';
-import { Humanoid, PALETTES, type Palette } from './humanoid';
+import { Humanoid, PALETTES, PED_PALETTES, type Archetype, type Palette } from './humanoid';
 import { blobShadowTexture } from './world';
 import { WORLD_PER_VU } from './coords';
 
@@ -13,23 +13,44 @@ import { WORLD_PER_VU } from './coords';
 const PLAYER_H = TUNING.PLAYER_R * 3 * WORLD_PER_VU;
 const ENTITY_H = TUNING.ENTITY_R * 2.9 * WORLD_PER_VU;
 
-export type ActorKind = 'bumper' | 'ped0' | 'ped1' | 'ped2';
+export type PedKind = keyof typeof PED_PALETTES;
+export type ActorKind = 'bumper' | PedKind;
 
-/** Pedestrian variant for an entity id — stable across frames (was `pedestrianSprite`). */
-export function pedestrianVariant(id: number): 0 | 1 | 2 {
-  return (Math.abs(id) % 3) as 0 | 1 | 2;
+/**
+ * The street's cast list. Read modulo the entity id, so the mix is deterministic
+ * from the simulation seed and stable for the whole life of an entity — no RNG
+ * of its own, and a replayed seed replays the same crowd.
+ *
+ * 16 slots: 6 adults, 4 women, 3 children, 3 elderly.
+ */
+const PED_MIX = [
+  'adultA', 'womanA', 'adultB', 'childA',
+  'elderA', 'adultA', 'womanB', 'adultB',
+  'childB', 'womanA', 'adultA', 'elderB',
+  'womanB', 'adultB', 'childA', 'elderA',
+] as const satisfies readonly PedKind[];
+
+/** Pedestrian variant for an entity id — stable across frames. */
+export function pedestrianVariant(id: number): PedKind {
+  return PED_MIX[Math.abs(id) % PED_MIX.length];
 }
 
 export class Actor {
   readonly humanoid: Humanoid;
   readonly shadow: THREE.Mesh;
 
-  constructor(scene: THREE.Scene, shadowMat: THREE.Material, palette: Palette, spec: ActorSpec) {
+  constructor(
+    scene: THREE.Scene,
+    shadowMat: THREE.Material,
+    palette: Palette,
+    readonly spec: ActorSpec,
+  ) {
     this.humanoid = new Humanoid({
       palette,
       height: spec.height,
       swing: spec.swing,
       shoulders: spec.shoulders,
+      archetype: spec.archetype,
     });
     this.shadow = new THREE.Mesh(SHADOW_GEO, shadowMat);
     this.shadow.rotation.x = -Math.PI / 2;
@@ -50,16 +71,36 @@ export class Actor {
   }
 }
 
-type ActorSpec = { height: number; swing: number; shoulders?: boolean };
+export type ActorSpec = {
+  height: number;
+  swing: number;
+  shoulders?: boolean;
+  archetype?: Archetype;
+  /** Gait cycle length multiplier — bigger is a longer, slower stride. */
+  strideMul: number;
+  /** Multipliers on the shared pedestrian pose's bob / sway. */
+  bobMul: number;
+  swayMul: number;
+};
 
 const SHADOW_GEO = new THREE.PlaneGeometry(1, 1);
 
+/**
+ * Archetype specs. `strideMul` / `bobMul` / `swayMul` are the whole gait
+ * vocabulary: the elderly shuffle (long slow cycle, almost no swing), children
+ * bounce (short quick cycle, exaggerated bob) and women get a touch more sway.
+ */
 const SPECS: Record<ActorKind, ActorSpec> = {
   // The villain is visibly bigger and plods with a heavy, wide swing.
-  bumper: { height: ENTITY_H * 1.22, swing: 0.62, shoulders: true },
-  ped0: { height: ENTITY_H, swing: 0.5 },
-  ped1: { height: ENTITY_H * 0.96, swing: 0.5 },
-  ped2: { height: ENTITY_H * 1.04, swing: 0.5 },
+  bumper: { height: ENTITY_H * 1.22, swing: 0.62, shoulders: true, strideMul: 1.45, bobMul: 1, swayMul: 1 },
+  adultA: { height: ENTITY_H, swing: 0.5, strideMul: 1.25, bobMul: 1, swayMul: 1 },
+  adultB: { height: ENTITY_H * 1.04, swing: 0.52, strideMul: 1.34, bobMul: 1, swayMul: 1 },
+  womanA: { height: ENTITY_H * 0.95, swing: 0.44, archetype: 'woman', strideMul: 1.16, bobMul: 0.9, swayMul: 1.2 },
+  womanB: { height: ENTITY_H * 0.93, swing: 0.46, archetype: 'woman', strideMul: 1.22, bobMul: 0.9, swayMul: 1.2 },
+  childA: { height: ENTITY_H * 0.66, swing: 0.78, archetype: 'child', strideMul: 0.86, bobMul: 1.8, swayMul: 1.15 },
+  childB: { height: ENTITY_H * 0.7, swing: 0.74, archetype: 'child', strideMul: 0.92, bobMul: 1.7, swayMul: 1.15 },
+  elderA: { height: ENTITY_H * 0.88, swing: 0.22, archetype: 'elder', strideMul: 1.95, bobMul: 0.45, swayMul: 0.6 },
+  elderB: { height: ENTITY_H * 0.9, swing: 0.2, archetype: 'elder', strideMul: 2.1, bobMul: 0.4, swayMul: 0.6 },
 };
 
 export class CharacterPool {
@@ -83,6 +124,9 @@ export class CharacterPool {
     this.player = new Actor(scene, this.shadowMat, PALETTES.player, {
       height: PLAYER_H,
       swing: 0.95,
+      strideMul: 1,
+      bobMul: 1,
+      swayMul: 1,
     });
   }
 
@@ -132,6 +176,5 @@ export class CharacterPool {
 type MutableActor = Actor & { kind: ActorKind };
 
 function paletteFor(kind: ActorKind): Palette {
-  if (kind === 'bumper') return PALETTES.bumper;
-  return PALETTES.pedestrian[kind === 'ped0' ? 0 : kind === 'ped1' ? 1 : 2];
+  return kind === 'bumper' ? PALETTES.bumper : PED_PALETTES[kind];
 }

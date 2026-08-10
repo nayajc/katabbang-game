@@ -4,7 +4,7 @@ import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Game, type GameOverInfo } from '@/game/game';
 import { audio } from '@/game/audio';
-import { notePointerDown, pointerEventsWorking } from '@/game/pointer-health';
+import { notePointerDown } from '@/game/pointer-health';
 import type { Phase } from '@/game/state';
 import { ThreeRenderer } from '@/game3d/renderer';
 import LocaleToggle from '@/app/LocaleToggle';
@@ -117,21 +117,51 @@ export default function GameCanvas({ onGameOver }: GameCanvasProps) {
    * be read as a counter tap.
    *
    * They act on `pointerdown` (press time, like every other input in the game)
-   * and fall back to `click` only on browsers that never deliver pointer
-   * events, which is the same latch `input.ts` uses for its touch fallback.
+   * and fall back to `click` only on browsers that never deliver pointer events.
+   *
+   * REGRESSION FIXED HERE: the fallback used to be gated on the 50ms
+   * `pointer-health` window, which is the wrong question to ask of a `click`.
+   * `click` is dispatched at RELEASE, so any press held longer than 50ms — i.e.
+   * every real human press, ~80-150ms — fell outside the window, the fallback
+   * decided pointer events were "silent", and the button fired TWICE: two lanes
+   * per press. Synthetic presses (Playwright click/tap, <50ms) stayed inside the
+   * window, which is why the e2e suite never saw it.
+   *
+   * The correct question is per-gesture, not per-window: did THIS element
+   * already consume a pointerdown for the gesture this click belongs to? The
+   * ref below answers it exactly, for any press duration, and still leaves the
+   * fallback live on a browser that never delivers pointerdown at all.
    */
+  const pointerConsumedBy = useRef<EventTarget | null>(null);
+
+  /** True when this click is the tail of a pointerdown we already acted on. */
+  const clickIsDuplicate = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+    if (pointerConsumedBy.current !== e.currentTarget) return false;
+    pointerConsumedBy.current = null;
+    return true;
+  }, []);
+
+  /** A gesture that ends in `pointercancel` never produces a click; re-arm. */
+  const onPointerCancel = useCallback(() => {
+    pointerConsumedBy.current = null;
+  }, []);
+
   const laneOf = (el: HTMLElement): -1 | 1 => (el.dataset.dir === '1' ? 1 : -1);
 
   const onLanePointerDown = useCallback((e: React.PointerEvent<HTMLButtonElement>) => {
     notePointerDown(e.timeStamp);
     e.preventDefault();
+    pointerConsumedBy.current = e.currentTarget;
     gameRef.current?.laneTap(laneOf(e.currentTarget));
   }, []);
 
-  const onLaneClick = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
-    if (pointerEventsWorking(e.timeStamp)) return;
-    gameRef.current?.laneTap(laneOf(e.currentTarget));
-  }, []);
+  const onLaneClick = useCallback(
+    (e: React.MouseEvent<HTMLButtonElement>) => {
+      if (clickIsDuplicate(e)) return;
+      gameRef.current?.laneTap(laneOf(e.currentTarget));
+    },
+    [clickIsDuplicate],
+  );
 
   const toggleMute = useCallback(() => {
     audio.toggleMute();
@@ -142,6 +172,7 @@ export default function GameCanvas({ onGameOver }: GameCanvasProps) {
     (e: React.PointerEvent<HTMLButtonElement>) => {
       notePointerDown(e.timeStamp);
       e.preventDefault();
+      pointerConsumedBy.current = e.currentTarget;
       toggleMute();
     },
     [toggleMute],
@@ -149,10 +180,10 @@ export default function GameCanvas({ onGameOver }: GameCanvasProps) {
 
   const onMuteClick = useCallback(
     (e: React.MouseEvent<HTMLButtonElement>) => {
-      if (pointerEventsWorking(e.timeStamp)) return;
+      if (clickIsDuplicate(e)) return;
       toggleMute();
     },
-    [toggleMute],
+    [clickIsDuplicate, toggleMute],
   );
 
   const controlsVisible = phase === 'running' || phase === 'slowmo' || phase === 'result';
@@ -168,6 +199,7 @@ export default function GameCanvas({ onGameOver }: GameCanvasProps) {
         data-testid="mute-button"
         data-muted={muted ? '1' : '0'}
         onPointerDown={onMutePointerDown}
+        onPointerCancel={onPointerCancel}
         onClick={onMuteClick}
       >
         {muted ? '🔇' : '🔊'}
@@ -182,6 +214,7 @@ export default function GameCanvas({ onGameOver }: GameCanvasProps) {
             data-testid="lane-left"
             data-dir="-1"
             onPointerDown={onLanePointerDown}
+            onPointerCancel={onPointerCancel}
             onClick={onLaneClick}
           >
             ◀
@@ -193,6 +226,7 @@ export default function GameCanvas({ onGameOver }: GameCanvasProps) {
             data-testid="lane-right"
             data-dir="1"
             onPointerDown={onLanePointerDown}
+            onPointerCancel={onPointerCancel}
             onClick={onLaneClick}
           >
             ▶

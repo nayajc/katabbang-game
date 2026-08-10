@@ -101,11 +101,16 @@ export function playerCounterPose(out: Pose, slowmo: number): Pose {
  * Pedestrian walk: shallower bob than the player, a pronounced waddle (one lean
  * per stride, not per step) and a per-entity stride length so a crowd never
  * pulses in unison.
+ *
+ * `strideMul` lets the caller override that per-entity default with an
+ * archetype's own cycle length (a shuffling pensioner, a bouncing child). It
+ * MUST match the multiplier the renderer feeds `Humanoid.stride`, or the bob
+ * and the legs drift apart.
  */
-export function pedestrianPose(out: Pose, id: number, scrollY: number): Pose {
+export function pedestrianPose(out: Pose, id: number, scrollY: number, strideMul?: number): Pose {
   const n = Math.abs(id);
-  const strideMul = 1.25 + (n % 5) * 0.09;
-  const p = (scrollY / (STRIDE_VU * strideMul)) * TAU + n * PHASE_SPREAD;
+  const mul = strideMul ?? 1.25 + (n % 5) * 0.09;
+  const p = (scrollY / (STRIDE_VU * mul)) * TAU + n * PHASE_SPREAD;
   const s = Math.sin(p);
   const lift = Math.abs(s);
   const impact = 1 - lift;

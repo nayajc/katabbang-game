@@ -232,6 +232,192 @@ export class ComicView {
 }
 
 // ---------------------------------------------------------------------------
+// Counter impact: comic speech bubble + a Perfect-only flash ring.
+// ---------------------------------------------------------------------------
+
+const BUBBLE_W = 512;
+const BUBBLE_H = 384;
+/** Wall-clock life of the speech bubble. */
+const BUBBLE_MS = 780;
+/** Wall-clock life of the Perfect flash ring. */
+const FLASH_MS = 300;
+/** Balloon height — above the HUD's centred result banner. */
+const BUBBLE_Y = 2.75;
+/** The ring sits on the villain's jaw, i.e. where the punch lands. */
+const FLASH_Y = 1.85;
+
+/**
+ * Jagged comic speech balloon: a white starburst bubble with a heavy black
+ * outline and a tail, with the punchy grade text ("POW!" / "정의구현!") set in
+ * bold across it. Deterministic spike jitter, so the shape is the same every
+ * time and the texture only repaints when the TEXT changes.
+ */
+function paintBubble(g: CanvasRenderingContext2D, text: string): void {
+  g.clearRect(0, 0, BUBBLE_W, BUBBLE_H);
+  g.save();
+  g.translate(BUBBLE_W / 2, BUBBLE_H * 0.44);
+
+  g.lineJoin = 'round';
+  g.lineWidth = 16;
+  g.strokeStyle = '#12101c';
+  g.fillStyle = '#ffffff';
+
+  // Tail first: the bubble's own fill then covers where the two overlap.
+  g.beginPath();
+  g.moveTo(-58, 70);
+  g.lineTo(-20, 96);
+  g.lineTo(-104, 172);
+  g.lineTo(-46, 84);
+  g.closePath();
+  g.fill();
+  g.stroke();
+
+  const spikes = 15;
+  const rx = 228;
+  const ry = 138;
+  g.beginPath();
+  for (let i = 0; i < spikes * 2; i += 1) {
+    const a = (i / (spikes * 2)) * Math.PI * 2;
+    // Alternating long/short radii + a fixed wobble = hand-drawn jaggedness.
+    const k = (i % 2 === 0 ? 1 : 0.76) + Math.sin(i * 2.4) * 0.045;
+    const x = Math.cos(a) * rx * k;
+    const y = Math.sin(a) * ry * k;
+    if (i === 0) g.moveTo(x, y);
+    else g.lineTo(x, y);
+  }
+  g.closePath();
+  g.fill();
+  g.stroke();
+
+  // Text, shrunk to fit the flat middle of the balloon. No outline: black on
+  // the balloon's white fill is already maximum contrast, and a stroke at this
+  // size just fattens the glyphs until the word closes up.
+  let size = 112;
+  const maxW = rx * 1.12;
+  do {
+    g.font = `900 ${size}px system-ui, sans-serif`;
+    if (g.measureText(text).width <= maxW) break;
+    size -= 6;
+  } while (size > 40);
+  g.textAlign = 'center';
+  g.textBaseline = 'middle';
+  g.fillStyle = '#12101c';
+  g.fillText(text, 0, 4);
+  g.restore();
+}
+
+/** Overshoot pop-in, brief hold, then a fade — the classic comic sting. */
+function bubbleScale(t: number): number {
+  if (t < 0.16) return 0.25 + (t / 0.16) * 1.05;
+  if (t < 0.34) return 1.3 - ((t - 0.16) / 0.18) * 0.3;
+  return 1 + (t - 0.34) * 0.14;
+}
+
+export class ImpactView {
+  private readonly sprite: THREE.Sprite;
+  private readonly canvas = document.createElement('canvas');
+  private readonly ctx: CanvasRenderingContext2D;
+  private readonly texture: THREE.CanvasTexture;
+  private readonly material: THREE.SpriteMaterial;
+  private readonly flash: THREE.Mesh;
+  private readonly flashMat: THREE.MeshBasicMaterial;
+  private readonly flashGeo: THREE.RingGeometry;
+  private text = '';
+  private bubbleStart = -Infinity;
+  private flashStart = -Infinity;
+
+  constructor(scene: THREE.Scene) {
+    this.canvas.width = BUBBLE_W;
+    this.canvas.height = BUBBLE_H;
+    this.ctx = this.canvas.getContext('2d')!;
+    this.texture = new THREE.CanvasTexture(this.canvas);
+    this.material = new THREE.SpriteMaterial({
+      map: this.texture,
+      transparent: true,
+      depthWrite: false,
+      depthTest: false,
+      fog: false,
+    });
+    this.sprite = new THREE.Sprite(this.material);
+    this.sprite.visible = false;
+    this.sprite.renderOrder = 12;
+    scene.add(this.sprite);
+
+    // Thin and short-lived: additive blending this close to the camera blows
+    // the whole frame out if the ring is either fat or long.
+    this.flashGeo = new THREE.RingGeometry(0.84, 1, 40);
+    this.flashMat = new THREE.MeshBasicMaterial({
+      color: 0xffd93d,
+      transparent: true,
+      side: THREE.DoubleSide,
+      depthWrite: false,
+      depthTest: false,
+      fog: false,
+      blending: THREE.AdditiveBlending,
+    });
+    this.flash = new THREE.Mesh(this.flashGeo, this.flashMat);
+    this.flash.visible = false;
+    this.flash.renderOrder = 11;
+    scene.add(this.flash);
+  }
+
+  /**
+   * Fires at the impact point. `perfect` adds the yellow flash ring.
+   *
+   * The bubble gets its own X because the HUD's centred "정의구현!" banner owns
+   * the middle of the screen: the caller pushes the balloon to whichever side
+   * has room, and the view lifts it clear of the banner's line.
+   */
+  trigger(
+    impactX: number,
+    impactZ: number,
+    bubbleX: number,
+    text: string,
+    perfect: boolean,
+    nowMs: number,
+  ): void {
+    if (text !== this.text) {
+      this.text = text;
+      paintBubble(this.ctx, text);
+      this.texture.needsUpdate = true;
+    }
+    this.sprite.position.set(bubbleX, BUBBLE_Y, impactZ);
+    this.bubbleStart = nowMs;
+    if (perfect) {
+      this.flash.position.set(impactX, FLASH_Y, impactZ);
+      this.flashStart = nowMs;
+    }
+  }
+
+  /** Wall-clock driven, like every other FX in the game. */
+  update(nowMs: number, camera: THREE.Camera): void {
+    const bt = (nowMs - this.bubbleStart) / BUBBLE_MS;
+    this.sprite.visible = bt >= 0 && bt < 1;
+    if (this.sprite.visible) {
+      const scale = bubbleScale(bt) * 1.55;
+      this.sprite.scale.set(scale * (BUBBLE_W / BUBBLE_H), scale, 1);
+      // Snap in at full opacity, fade over the last third.
+      this.material.opacity = Math.min(1, (1 - bt) * 3);
+    }
+
+    const ft = (nowMs - this.flashStart) / FLASH_MS;
+    this.flash.visible = ft >= 0 && ft < 1;
+    if (this.flash.visible) {
+      this.flash.quaternion.copy(camera.quaternion);
+      this.flash.scale.setScalar(0.3 + ft * 1.05);
+      this.flashMat.opacity = (1 - ft) * 0.55;
+    }
+  }
+
+  dispose(): void {
+    this.texture.dispose();
+    this.material.dispose();
+    this.flashGeo.dispose();
+    this.flashMat.dispose();
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Counter ring: the 2D timing cue, re-cut as two ground decals.
 // ---------------------------------------------------------------------------
 

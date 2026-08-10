@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-08-09T13:19:21.261Z",
+  "lastUpdated": "2026-08-10T00:24:05.551Z",
   "activeFeatures": [
     "assets-staging",
     "game",
@@ -39,9 +39,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-08-08T06:57:17.913Z",
-        "lastUpdated": "2026-08-09T12:54:59.267Z"
+        "lastUpdated": "2026-08-10T00:05:18.642Z"
       },
-      "lastFile": "/Users/jcsong/codework/katabbang-game/src/game/game.ts"
+      "lastFile": "/Users/jcsong/codework/katabbang-game/src/game/anim.ts"
     },
     "entities": {
       "phase": "do",
@@ -65,7 +65,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-08-08T07:00:26.754Z",
-        "lastUpdated": "2026-08-09T13:03:06.927Z"
+        "lastUpdated": "2026-08-10T00:03:02.813Z"
       },
       "lastFile": "/Users/jcsong/codework/katabbang-game/src/app/play/GameCanvas.tsx"
     },
@@ -104,9 +104,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-08-08T07:02:14.518Z",
-        "lastUpdated": "2026-08-09T13:19:21.261Z"
+        "lastUpdated": "2026-08-10T00:09:09.808Z"
       },
-      "lastFile": "/Users/jcsong/codework/katabbang-game/tests/e2e/counter-timing.spec.ts"
+      "lastFile": "/Users/jcsong/codework/katabbang-game/tests/e2e/lane-buttons.spec.ts"
     },
     "fx": {
       "phase": "do",
@@ -117,9 +117,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-08-08T07:10:33.088Z",
-        "lastUpdated": "2026-08-09T12:53:46.840Z"
+        "lastUpdated": "2026-08-10T00:07:46.768Z"
       },
-      "lastFile": "/Users/jcsong/codework/katabbang-game/src/game/fx/comic.ts"
+      "lastFile": "/Users/jcsong/codework/katabbang-game/src/game/fx/index.ts"
     },
     "leaderboard": {
       "phase": "do",
@@ -169,7 +169,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-08-09T12:55:48.383Z",
-        "lastUpdated": "2026-08-09T13:09:01.152Z"
+        "lastUpdated": "2026-08-10T00:24:05.551Z"
       },
       "lastFile": "/Users/jcsong/codework/katabbang-game/src/game3d/effects.ts"
     }
@@ -182,7 +182,7 @@
   "session": {
     "startedAt": "2026-08-08T06:23:19.873Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-08-09T13:19:21.261Z"
+    "lastActivity": "2026-08-10T00:24:05.551Z"
   },
   "history": [
     {
@@ -1754,6 +1754,216 @@
     {
       "timestamp": "2026-08-09T13:19:21.261Z",
       "feature": "e2e",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-10T00:02:42.889Z",
+      "feature": "play",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-10T00:02:47.932Z",
+      "feature": "play",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-10T00:02:52.825Z",
+      "feature": "play",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-10T00:02:57.546Z",
+      "feature": "play",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-10T00:03:02.813Z",
+      "feature": "play",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-10T00:04:15.422Z",
+      "feature": "game3d",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-10T00:04:23.790Z",
+      "feature": "game3d",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-10T00:04:28.762Z",
+      "feature": "game3d",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-10T00:04:37.212Z",
+      "feature": "game3d",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-10T00:04:43.451Z",
+      "feature": "game3d",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-10T00:04:57.619Z",
+      "feature": "game3d",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-10T00:05:03.584Z",
+      "feature": "game3d",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-10T00:05:08.983Z",
+      "feature": "game3d",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-10T00:05:18.642Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-10T00:05:52.243Z",
+      "feature": "game3d",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-10T00:06:30.424Z",
+      "feature": "game3d",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-10T00:06:40.931Z",
+      "feature": "game3d",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-10T00:06:48.436Z",
+      "feature": "game3d",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-10T00:06:52.944Z",
+      "feature": "game3d",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-10T00:07:17.094Z",
+      "feature": "game3d",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-10T00:07:23.352Z",
+      "feature": "game3d",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-10T00:07:31.218Z",
+      "feature": "game3d",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-10T00:07:36.980Z",
+      "feature": "game3d",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-10T00:07:46.768Z",
+      "feature": "fx",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-10T00:07:57.775Z",
+      "feature": "game3d",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-10T00:09:01.571Z",
+      "feature": "e2e",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-10T00:09:09.808Z",
+      "feature": "e2e",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-10T00:21:42.121Z",
+      "feature": "game3d",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-10T00:21:48.025Z",
+      "feature": "game3d",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-10T00:21:55.207Z",
+      "feature": "game3d",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-10T00:22:00.623Z",
+      "feature": "game3d",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-10T00:22:07.269Z",
+      "feature": "game3d",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-10T00:22:15.677Z",
+      "feature": "game3d",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-10T00:22:22.113Z",
+      "feature": "game3d",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-08-10T00:24:05.551Z",
+      "feature": "game3d",
       "phase": "do",
       "action": "updated"
     }

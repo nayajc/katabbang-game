@@ -67,15 +67,10 @@ export class Fx {
       spread: 1.1,
     });
     this.shake.kick(perfect ? 20 : 12);
-    const s = getStrings();
-    this.comic.pop(perfect ? s.fxPerfect : s.fxPow, x, y - 40, {
-      size: perfect ? 56 : 46,
-      color: perfect ? '#ffd93d' : '#7ee787',
-      burst: true,
-      life: 800,
-    });
-    // NB: the big centred justice banner is drawn by render.ts — the comic
-    // pop stays short so the two never read as duplicated text.
+    // NB: the impact caption for a LANDED counter is the renderer's comic
+    // speech bubble (POW! / 퍼펙트!), fired at the uppercut's contact point.
+    // A comic pop here as well would print the very same string a few pixels
+    // away; the pool is left for the misses and combos, which have no bubble.
   }
 
   /** Whiffed counter — the bumper connects. */

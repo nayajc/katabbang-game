@@ -38,6 +38,78 @@ test('lane buttons move the player during running', async ({ page }) => {
   await expect(canvas).toHaveAttribute('data-player-lane', '1');
 });
 
+/**
+ * REGRESSION: one press moved TWO lanes.
+ *
+ * The buttons act on `pointerdown` and fall back to `click` when pointer events
+ * are silent. That fallback used to be gated on the 50ms `pointer-health`
+ * window — but `click` is dispatched at RELEASE, so any press held longer than
+ * 50ms (i.e. every real human press) fell outside the window, the fallback
+ * concluded pointer events were dead, and the lane moved a second time.
+ *
+ * Synthetic presses (`click()` / `tap()`, both <50ms) stayed inside the window,
+ * which is exactly why the suite above never caught it. So every press here is
+ * either HELD for a realistic duration or dispatched by hand, and every
+ * assertion is a single direct read — polling could otherwise sample the lane
+ * between the pointerdown and the duplicate click and pass on the transient.
+ *
+ * Each step also moves AWAY from the clamp it would hit on a double fire, so a
+ * doubled press lands on a different lane rather than being masked by clamping.
+ */
+test('one press moves exactly one lane, on mouse, touch and the click fallback', async ({
+  page,
+}) => {
+  await page.goto('/');
+  const canvas = page.getByTestId('game-canvas');
+  await page.getByTestId('start-button').click();
+  await expect(canvas).toHaveAttribute('data-player-lane', '1');
+
+  /** Lets the trailing `click` of a gesture land before the lane is read. */
+  const settle = () => page.waitForTimeout(150);
+
+  // --- mouse, held for a realistic press duration (0 -> 1, never 2) ---
+  await page.keyboard.press('ArrowLeft');
+  await expect(canvas).toHaveAttribute('data-player-lane', '0');
+  await page.getByTestId('lane-right').click({ delay: 160 });
+  await settle();
+  expect(await lane(canvas)).toBe('1');
+
+  // A longer hold must be no different.
+  await page.keyboard.press('ArrowLeft');
+  await page.getByTestId('lane-right').click({ delay: 420 });
+  await settle();
+  expect(await lane(canvas)).toBe('1');
+
+  // --- touch, held (2 -> 1, never 0) ---
+  await page.keyboard.press('ArrowRight');
+  await expect(canvas).toHaveAttribute('data-player-lane', '2');
+  await page.getByTestId('lane-left').evaluate(async (el) => {
+    const base = {
+      pointerId: 7,
+      pointerType: 'touch',
+      isPrimary: true,
+      bubbles: true,
+      cancelable: true,
+    };
+    el.dispatchEvent(new PointerEvent('pointerdown', base));
+    await new Promise((r) => setTimeout(r, 220));
+    el.dispatchEvent(new PointerEvent('pointerup', base));
+    el.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+  });
+  await settle();
+  expect(await lane(canvas)).toBe('1');
+
+  // --- pointer-silent browser: a bare click with no pointerdown at all must
+  // still move the player, and still only once (0 -> 1, never 2).
+  await page.keyboard.press('ArrowLeft');
+  await expect(canvas).toHaveAttribute('data-player-lane', '0');
+  await page
+    .getByTestId('lane-right')
+    .evaluate((el) => el.dispatchEvent(new MouseEvent('click', { bubbles: true })));
+  await settle();
+  expect(await lane(canvas)).toBe('1');
+});
+
 test('the lane buttons are absent on the title screen and return for a run', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByTestId('lane-left')).toHaveCount(0);
@@ -149,4 +221,10 @@ test('the mute button toggles audio without touching the run', async ({ page }) 
   await expect(canvas).toHaveAttribute('data-player-lane', '1');
   await press(page, mute);
   await expect(mute).toHaveAttribute('data-muted', '0');
+
+  // The mute button shares the lane buttons' pointerdown + click-fallback path,
+  // so it had the same double-fire: a held press toggled twice and looked dead.
+  await mute.click({ delay: 180 });
+  await page.waitForTimeout(150);
+  expect(await mute.getAttribute('data-muted')).toBe('1');
 });
